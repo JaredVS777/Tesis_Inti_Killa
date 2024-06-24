@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verificar cuenta</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f2f2f2; /* Color de fondo */
+        }
+        .container {
+            background-color: #ffffff; /* Color blanco */
+            padding: 20px;
+            text-align: center;
+            border-radius: 20px; /* Bordes circulares */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra */
+            max-width: 400px; /* Ancho máximo */
+            width: 90%; /* Ancho del contenedor */
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+        }
+        .mensaje {
+            margin-top: 20px;
+        }
+        .texto{
+            color: rgba(138, 132, 132, 0.952);
+        }
+        .verificar-btn {
+            background-color: #007bff; /* Color del botón */
+            color: #ffffff; /* Color del texto del botón */
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none; /* Elimina subrayado */
+            transition: background-color 0.3s ease;
+        }
+        .verificar-btn:hover {
+            background-color: #0056b3; /* Color del botón al pasar el cursor */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="imagen">
+            <img src="https://res.cloudinary.com/dtlumnzvm/image/upload/v1714571591/INTI-KILLA/tqdtnuklgsiruyidusok.png" alt="INTI-KILLA">
+        </div>
+        <div class="mensaje">
+            <h1>Verifica tu correo electrónico</h1>
+            <p class="texto">
+                Hola apreciado administrador. 
+                Para poder tener acceso completo al sistema de gestión de 
+                INTI-KILLA, es necesaria la comprobación de tu correo.
+                Presiona en el botón de abajo para completar con el registro de tu 
+                cuenta como administrador
+            </p>
+            <br>
+            <a href="${process.env.URL_BACKEND}confirmar/${encodeURIComponent(token)}" class="verificar-btn">Verificar cuenta</a>
+        </div>
+    </div>
+</body>
+</html>
