@@ -101,7 +101,7 @@ class _ProformaPageState extends State<ProformaPage> {
     );
   }
 
- Widget _buildDrawer(BuildContext context) {
+Widget _buildDrawer(BuildContext context) {
   return FutureBuilder<SharedPreferences>(
     future: SharedPreferences.getInstance(),
     builder: (BuildContext context, AsyncSnapshot<SharedPreferences> snapshot) {
@@ -109,22 +109,23 @@ class _ProformaPageState extends State<ProformaPage> {
         return CircularProgressIndicator();
       } else {
         final prefs = snapshot.data!;
-        final username = prefs.getString('username') ?? 'Usuario';
+        final nombre = prefs.getString('nombre') ?? 'Usuario';
+        final apellido = prefs.getString('apellido') ?? '';
 
         return Drawer(
           child: ListView(
             padding: EdgeInsets.zero,
             children: <Widget>[
               UserAccountsDrawerHeader(
-                accountName: Text(username),
+                accountName: Text('$nombre $apellido'),
                 accountEmail: Text('USUARIO'),
                 decoration: BoxDecoration(
-                  color: Colors.blue,
+                  color: Color(0xff5511b0),
                 ),
                 currentAccountPicture: CircleAvatar(
                   backgroundColor: Colors.white,
                   child: Text(
-                    username[0],
+                    nombre.isNotEmpty ? nombre[0] : 'U',
                     style: TextStyle(fontSize: 40.0),
                   ),
                 ),

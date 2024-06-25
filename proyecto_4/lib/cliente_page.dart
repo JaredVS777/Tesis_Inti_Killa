@@ -298,79 +298,81 @@ class _ClientePageState extends State<ClientePage> {
     );
   }
 
-  Widget _buildDrawer(BuildContext context) {
-    return FutureBuilder<SharedPreferences>(
-      future: SharedPreferences.getInstance(),
-      builder: (BuildContext context, AsyncSnapshot<SharedPreferences> snapshot) {
-        if (!snapshot.hasData) {
-          return CircularProgressIndicator();
-        } else {
-          final prefs = snapshot.data!;
-          final username = prefs.getString('username') ?? 'Usuario';
+Widget _buildDrawer(BuildContext context) {
+  return FutureBuilder<SharedPreferences>(
+    future: SharedPreferences.getInstance(),
+    builder: (BuildContext context, AsyncSnapshot<SharedPreferences> snapshot) {
+      if (!snapshot.hasData) {
+        return CircularProgressIndicator();
+      } else {
+        final prefs = snapshot.data!;
+        final nombre = prefs.getString('nombre') ?? 'Usuario';
+        final apellido = prefs.getString('apellido') ?? '';
 
-          return Drawer(
-            child: ListView(
-              padding: EdgeInsets.zero,
-              children: <Widget>[
-                UserAccountsDrawerHeader(
-                  accountName: Text(username),
-                  accountEmail: Text('USUARIO'),
-                  decoration: BoxDecoration(
-                    color: Colors.blue,
+        return Drawer(
+          child: ListView(
+            padding: EdgeInsets.zero,
+            children: <Widget>[
+              UserAccountsDrawerHeader(
+                accountName: Text('$nombre $apellido'),
+                accountEmail: Text('USUARIO'),
+                decoration: BoxDecoration(
+                  color: Color(0xff5511b0),
+                ),
+                currentAccountPicture: CircleAvatar(
+                  backgroundColor: Colors.white,
+                  child: Text(
+                    nombre.isNotEmpty ? nombre[0] : 'U',
+                    style: TextStyle(fontSize: 40.0),
                   ),
-                  currentAccountPicture: CircleAvatar(
-                    backgroundColor: Colors.white,
-                    child: Text(
-                      username[0],
-                      style: TextStyle(fontSize: 40.0),
-                    ),
-                  ),
                 ),
-                ListTile(
-                  leading: Icon(Icons.person),
-                  title: Text('Clientes'),
-                  onTap: () {
-                    Navigator.pushNamed(context, '/cliente');
-                  },
-                ),
-                ListTile(
-                  leading: Icon(Icons.description),
-                  title: Text('Proformas'),
-                  onTap: () {
-                    Navigator.pushNamed(context, '/proforma');
-                  },
-                ),
-                ListTile(
-                  leading: Icon(Icons.receipt),
-                  title: Text('Facturas'),
-                  onTap: () {
-                    Navigator.pushNamed(context, '/factura');
-                  },
-                ),
-                ListTile(
-                  leading: Icon(Icons.logout),
-                  title: Text('Cerrar sesión'),
-                  onTap: () async {
-                    SharedPreferences prefs = await SharedPreferences.getInstance();
-                    await prefs.remove('token');
-                    await prefs.remove('nombre');
-                    await prefs.remove('apellido');
-                    await prefs.remove('username');
-                    await prefs.remove('_id');
-                    await prefs.remove('email');
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (context) => LoginPage()),
-                    );
-                  },
-                ),
-              ],
-            ),
-          );
-        }
-      },
-    );
-  }
+              ),
+              ListTile(
+                leading: Icon(Icons.person),
+                title: Text('Clientes'),
+                onTap: () {
+                  Navigator.pushNamed(context, '/cliente');
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.description),
+                title: Text('Proformas'),
+                onTap: () {
+                  Navigator.pushNamed(context, '/proforma');
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.receipt),
+                title: Text('Facturas'),
+                onTap: () {
+                  Navigator.pushNamed(context, '/factura');
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.logout),
+                title: Text('Cerrar sesión'),
+                onTap: () async {
+                  SharedPreferences prefs = await SharedPreferences.getInstance();
+                  await prefs.remove('token');
+                  await prefs.remove('nombre');
+                  await prefs.remove('apellido');
+                  await prefs.remove('username');
+                  await prefs.remove('_id');
+                  await prefs.remove('email');
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => LoginPage()),
+                  );
+                },
+              ),
+            ],
+          ),
+        );
+      }
+    },
+  );
+}
+
 
   Widget _buildClienteCard(String id, String nombre, String cedula, String telefono, String direccion, String email, String tipodoc, int index) {
     final tipoDoc = _tipoDocMap[tipodoc] ?? 'Tipo de identificación no disponible';

@@ -22,7 +22,6 @@ class LoginPage extends StatelessWidget {
               _LogoHeader(),
             ],
           ),
-          _Titulo(),
           SizedBox(height: 40),
           _UsernameAndPassword(
             usernameController: usernameController,
@@ -174,23 +173,6 @@ class _TextFieldCustom extends StatelessWidget {
           borderSide: BorderSide(color: Color(0xffEBDCFA)),
           borderRadius: BorderRadius.circular(50),
         ),
-      ),
-    );
-  }
-}
-
-class _Titulo extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(15.0),
-      child: Row(
-        children: [
-          Text(
-            'Iniciar sesión',
-            style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold, color: Colors.white),
-          ),
-        ],
       ),
     );
   }
