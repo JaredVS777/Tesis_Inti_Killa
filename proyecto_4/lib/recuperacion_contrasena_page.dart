@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'verificacion_contrasena_page.dart'; // Importa la página de verificación
+import 'api_service.dart';
+import 'verificacion_contrasena_page.dart';
 
 class RecuperacionContrasenaPage extends StatelessWidget {
   final TextEditingController emailController = TextEditingController();
@@ -7,7 +8,7 @@ class RecuperacionContrasenaPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFF0A192F), // Color de fondo cambiado
+      backgroundColor: Color(0xFF0A192F),
       body: ListView(
         padding: EdgeInsets.only(top: 0),
         physics: BouncingScrollPhysics(),
@@ -64,12 +65,19 @@ class _BottonRecuperar extends StatelessWidget {
           'Siguiente',
           style: TextStyle(color: Colors.white, fontSize: 18),
         ),
-        onPressed: () {
+        onPressed: () async {
           final email = emailController.text;
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => VerificacionContrasenaPage(email: email)),
-          );
+          final success = await ApiService.recuperarPassword(email);
+          if (success) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => VerificacionContrasenaPage(email: email)),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text('Error al enviar el correo de recuperación'),
+            ));
+          }
         },
       ),
     );
@@ -134,23 +142,6 @@ class _TextFieldCustom extends StatelessWidget {
   }
 }
 
-class _Titulo extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(15.0),
-      child: Row(
-        children: [
-          Text(
-            'Recuperar Contraseña',
-            style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold, color: Colors.white),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _LogoHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -210,4 +201,21 @@ class _HeaderRecuperacionPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}
+
+class _Titulo extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(15.0),
+      child: Row(
+        children: [
+          Text(
+            'Recuperar Contraseña',
+            style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold, color: Colors.white),
+          ),
+        ],
+      ),
+    );
+  }
 }

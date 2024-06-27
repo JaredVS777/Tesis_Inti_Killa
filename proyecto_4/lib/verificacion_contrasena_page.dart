@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'api_service.dart';
 import 'login_page.dart';
 
 class VerificacionContrasenaPage extends StatelessWidget {
@@ -12,7 +13,7 @@ class VerificacionContrasenaPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFF0A192F), // Color de fondo cambiado
+      backgroundColor: Color(0xFF0A192F),
       body: ListView(
         padding: EdgeInsets.only(top: 0),
         physics: BouncingScrollPhysics(),
@@ -32,7 +33,11 @@ class VerificacionContrasenaPage extends StatelessWidget {
             confirmNewPasswordController: confirmNewPasswordController,
           ),
           SizedBox(height: 40),
-          _BottonRecuperar(),
+          _BottonRecuperar(
+            verificationCodeController: verificationCodeController,
+            newPasswordController: newPasswordController,
+            confirmNewPasswordController: confirmNewPasswordController,
+          ),
         ],
       ),
     );
@@ -56,6 +61,16 @@ class _BackButton extends StatelessWidget {
 }
 
 class _BottonRecuperar extends StatelessWidget {
+  final TextEditingController verificationCodeController;
+  final TextEditingController newPasswordController;
+  final TextEditingController confirmNewPasswordController;
+
+  _BottonRecuperar({
+    required this.verificationCodeController,
+    required this.newPasswordController,
+    required this.confirmNewPasswordController,
+  });
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -69,12 +84,22 @@ class _BottonRecuperar extends StatelessWidget {
           'Continuar',
           style: TextStyle(color: Colors.white, fontSize: 18),
         ),
-        onPressed: () {
-          // Aquí podrías agregar la lógica para verificar el código y establecer la nueva contraseña
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => LoginPage()),
-          );
+        onPressed: () async {
+          final token = verificationCodeController.text;
+          final newPassword = newPasswordController.text;
+          final confirmNewPassword = confirmNewPasswordController.text;
+
+          final success = await ApiService.verificarCodigoYActualizarPassword(token, newPassword, confirmNewPassword);
+          if (success) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => LoginPage()),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text('Error al actualizar la contraseña'),
+            ));
+          }
         },
       ),
     );
@@ -149,23 +174,6 @@ class _TextFieldCustom extends StatelessWidget {
   }
 }
 
-class _Titulo extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(15.0),
-      child: Row(
-        children: [
-          Text(
-            'Verificación de Contraseña',
-            style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold, color: Colors.white),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _LogoHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -225,4 +233,21 @@ class _HeaderRecuperacionPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}
+
+class _Titulo extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(15.0),
+      child: Row(
+        children: [
+          Text(
+            'Verificación de Contraseña',
+            style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold, color: Colors.white),
+          ),
+        ],
+      ),
+    );
+  }
 }

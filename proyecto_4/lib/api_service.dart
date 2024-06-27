@@ -231,23 +231,64 @@ class ApiService {
   }
 
   static Future<bool> recuperarUsuario(String email) async {
-    final url = '$baseUrl/empleado/recuperar-username?email=$email';
-    print('Request URL: $url');
-
     try {
-      final response = await http.get(
-        Uri.parse(url),
+      final response = await http.post(
+        Uri.parse('$baseUrl/empleado/recuperar-username'),
         headers: {'Content-Type': 'application/json'},
+        body: json.encode({'email': email}),
       );
-
-      print('Response status: ${response.statusCode}');
-      print('Response body: ${response.body}');
 
       if (response.statusCode == 200) {
         print('Usuario recuperado exitosamente.');
         return true;
       } else {
         print('Error al recuperar el usuario: ${response.statusCode}');
+        print('Cuerpo de la respuesta: ${response.body}');
+        return false;
+      }
+    } catch (e) {
+      print('Error en la solicitud HTTP: $e');
+      return false;
+    }
+  }
+
+  static Future<bool> recuperarPassword(String email) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/empleado/recuperar-password'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'email': email}),
+      );
+
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        print('Error al recuperar contraseña: ${response.statusCode}');
+        print('Cuerpo de la respuesta: ${response.body}');
+        return false;
+      }
+    } catch (e) {
+      print('Error en la solicitud HTTP: $e');
+      return false;
+    }
+  }
+
+  static Future<bool> verificarCodigoYActualizarPassword(String token, String newPassword, String confirmNewPassword) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/empleado/nuevo-password'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'token': token,
+          'password': newPassword,
+          'confirmpassword': confirmNewPassword,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        print('Error al actualizar contraseña: ${response.statusCode}');
         print('Cuerpo de la respuesta: ${response.body}');
         return false;
       }
@@ -494,4 +535,7 @@ class ApiService {
       throw e;
     }
   }
+
+
+
 }
