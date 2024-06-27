@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'api_service.dart';
-import 'proforma_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class FormularioProformaPage extends StatefulWidget {
@@ -15,9 +14,9 @@ class _FormularioProformaPageState extends State<FormularioProformaPage> {
   final TextEditingController _cantidadController = TextEditingController();
   final TextEditingController _precioUnitarioController = TextEditingController();
   final TextEditingController _totalDescuentoController = TextEditingController();
+  final TextEditingController _idEmpleadoController = TextEditingController();
 
   String _idCliente = '';
-  String _idEmpleado = '';
   List<Map<String, dynamic>> _productos = [];
   double _totalSinImpuestos = 0.0;
   double _totalDescuento = 0.0;
@@ -54,11 +53,11 @@ class _FormularioProformaPageState extends State<FormularioProformaPage> {
 
   Future<void> _setEmpleadoId() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? idEmpleado = prefs.getString('idEmpleado');
+    String? idEmpleado = prefs.getString('_id');  // Usamos '_id' ya que es el identificador del empleado
 
     if (idEmpleado != null) {
       setState(() {
-        _idEmpleado = idEmpleado;
+        _idEmpleadoController.text = idEmpleado;  // Establecer el ID del empleado en el controlador del campo de texto
       });
     }
   }
@@ -104,7 +103,116 @@ class _FormularioProformaPageState extends State<FormularioProformaPage> {
         // Calcular el total sin impuestos
         _calcularTotalSinImpuestos();
       });
+
+      // Mostrar el BottomSheet con la tabla de productos y los campos adicionales
+      _mostrarBottomSheet();
     }
+  }
+
+  void _mostrarBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (BuildContext context) {
+        return Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: DataTable(
+                    columns: [
+                      DataColumn(label: Text('Código')),
+                      DataColumn(label: Text('Nombre')),
+                      DataColumn(label: Text('Cantidad')),
+                      DataColumn(label: Text('Precio Unitario')),
+                      DataColumn(label: Text('Acciones')),
+                    ],
+                    rows: _productos.map((producto) {
+                      return DataRow(cells: [
+                        DataCell(Text(producto['codigo'])),
+                        DataCell(Text(producto['nombre'])),
+                        DataCell(Text(producto['cantidad'].toString())),
+                        DataCell(Text(producto['precioUnitario'].toString())),
+                        DataCell(
+                          IconButton(
+                            icon: Icon(Icons.delete),
+                            onPressed: () {
+                              setState(() {
+                                _productos.remove(producto);
+                                _calcularTotalSinImpuestos();
+                                Navigator.pop(context); // Cerrar el BottomSheet
+                                _mostrarBottomSheet(); // Volver a mostrar el BottomSheet actualizado
+                              });
+                            },
+                          ),
+                        ),
+                      ]);
+                    }).toList(),
+                  ),
+                ),
+                TextFormField(
+                  decoration: InputDecoration(labelText: 'Total sin Impuestos'),
+                  keyboardType: TextInputType.number,
+                  readOnly: true,
+                  controller: TextEditingController(
+                    text: _totalSinImpuestos.toStringAsFixed(2),
+                  ),
+                ),
+                TextFormField(
+                  controller: _totalDescuentoController,
+                  decoration: InputDecoration(labelText: 'Total Descuento'),
+                  keyboardType: TextInputType.number,
+                  onSaved: (value) {
+                    _totalDescuento = double.tryParse(value ?? '0.0') ?? 0.0;
+                    _actualizarTotales();
+                  },
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Por favor, ingrese el total descuento';
+                    }
+                    return null;
+                  },
+                ),
+                TextFormField(
+                  decoration: InputDecoration(labelText: 'Total Impuesto Valor'),
+                  keyboardType: TextInputType.number,
+                  readOnly: true,
+                  controller: TextEditingController(
+                    text: _totalImpuestoValor.toStringAsFixed(2),
+                  ),
+                ),
+                TextFormField(
+                  decoration: InputDecoration(labelText: 'Importe Total'),
+                  keyboardType: TextInputType.number,
+                  readOnly: true,
+                  controller: TextEditingController(
+                    text: _importeTotal.toStringAsFixed(2),
+                  ),
+                ),
+                SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context); // Cerrar el BottomSheet
+                    _guardarProforma();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Color(0xff5511b0),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(50),
+                    ),
+                    padding: EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                  ),
+                  child: Text('Guardar Proforma', style: TextStyle(color: Colors.white, fontSize: 18)),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   Future<void> _guardarProforma() async {
@@ -126,7 +234,7 @@ class _FormularioProformaPageState extends State<FormularioProformaPage> {
           Map<String, dynamic> response = await ApiService.agregarProforma(
             token: token,
             idCliente: _idCliente,
-            idEmpleado: _idEmpleado,
+            idEmpleado: _idEmpleadoController.text,
             productos: _productos,
             totalSinImpuestos: _totalSinImpuestos,
             totalDescuento: _totalDescuento,
@@ -158,146 +266,139 @@ class _FormularioProformaPageState extends State<FormularioProformaPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Formulario de Proformas'),
+        backgroundColor: Color(0xff5511b0),
       ),
-      body: Padding(
+      backgroundColor: Color(0xFF0A192F),
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            children: <Widget>[
-              DropdownButtonFormField(
-                decoration: InputDecoration(labelText: 'ID Cliente'),
-                value: _idCliente.isNotEmpty ? _idCliente : null,
-                items: _clientes.map<DropdownMenuItem<String>>((cliente) {
-                  return DropdownMenuItem<String>(
-                    value: cliente['_id'],
-                    child: Text(cliente['_id']),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _idCliente = value as String;
-                  });
-                },
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor, seleccione un cliente';
-                  }
-                  return null;
-                },
-              ),
-              TextFormField(
-                decoration: InputDecoration(labelText: 'ID Empleado'),
-                initialValue: _idEmpleado,
-                onChanged: (value) {
-                  setState(() {
-                    _idEmpleado = value;
-                  });
-                },
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor, ingrese el ID del empleado';
-                  }
-                  return null;
-                },
-              ),
-              TextFormField(
-                controller: _codigoController,
-                decoration: InputDecoration(labelText: 'Código del Producto'),
-              ),
-              TextFormField(
-                controller: _nombreController,
-                decoration: InputDecoration(labelText: 'Nombre del Producto'),
-              ),
-              TextFormField(
-                controller: _cantidadController,
-                decoration: InputDecoration(labelText: 'Cantidad'),
-                keyboardType: TextInputType.number,
-              ),
-              TextFormField(
-                controller: _precioUnitarioController,
-                decoration: InputDecoration(labelText: 'Precio Unitario'),
-                keyboardType: TextInputType.number,
-              ),
-              SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _agregarProducto,
-                child: Text('Agregar Producto'),
-              ),
-              SizedBox(height: 20),
-              DataTable(
-                columns: [
-                  DataColumn(label: Text('Código')),
-                  DataColumn(label: Text('Nombre')),
-                  DataColumn(label: Text('Cantidad')),
-                  DataColumn(label: Text('Precio Unitario')),
-                  DataColumn(label: Text('Acciones')),
-                ],
-                rows: _productos.map((producto) {
-                  return DataRow(cells: [
-                    DataCell(Text(producto['codigo'])),
-                    DataCell(Text(producto['nombre'])),
-                    DataCell(Text(producto['cantidad'].toString())),
-                    DataCell(Text(producto['precioUnitario'].toString())),
-                    DataCell(
-                      IconButton(
-                        icon: Icon(Icons.delete),
-                        onPressed: () {
-                          setState(() {
-                            _productos.remove(producto);
-                            _calcularTotalSinImpuestos();
-                          });
-                        },
-                      ),
+        child: Center(
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                DropdownButtonFormField(
+                  decoration: InputDecoration(
+                    labelText: 'ID Cliente',
+                    filled: true,
+                    fillColor: Color(0xffEBDCFA),
+                    border: OutlineInputBorder(
+                      borderSide: BorderSide(color: Color(0xffEBDCFA)),
+                      borderRadius: BorderRadius.circular(50),
                     ),
-                  ]);
-                }).toList(),
-              ),
-              TextFormField(
-                decoration: InputDecoration(labelText: 'Total sin Impuestos'),
-                keyboardType: TextInputType.number,
-                readOnly: true,
-                controller: TextEditingController(
-                  text: _totalSinImpuestos.toStringAsFixed(2),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Color(0xffEBDCFA)),
+                      borderRadius: BorderRadius.circular(50),
+                    ),
+                  ),
+                  value: _idCliente.isNotEmpty ? _idCliente : null,
+                  items: _clientes.map<DropdownMenuItem<String>>((cliente) {
+                    return DropdownMenuItem<String>(
+                      value: cliente['_id'],
+                      child: Text(cliente['_id'], style: TextStyle(color: Colors.black)),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _idCliente = value as String;
+                    });
+                  },
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Por favor, seleccione un cliente';
+                    }
+                    return null;
+                  },
                 ),
-              ),
-              TextFormField(
-                controller: _totalDescuentoController,
-                decoration: InputDecoration(labelText: 'Total Descuento'),
-                keyboardType: TextInputType.number,
-                onSaved: (value) {
-                  _totalDescuento = double.tryParse(value ?? '0.0') ?? 0.0;
-                  _actualizarTotales();
-                },
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor, ingrese el total descuento';
-                  }
-                  return null;
-                },
-              ),
-              TextFormField(
-                decoration: InputDecoration(labelText: 'Total Impuesto Valor'),
-                keyboardType: TextInputType.number,
-                readOnly: true,
-                controller: TextEditingController(
-                  text: _totalImpuestoValor.toStringAsFixed(2),
+                SizedBox(height: 20),
+                _TextFieldCustom(
+                  icono: Icons.person_outline,
+                  type: TextInputType.text,
+                  texto: 'ID Empleado',
+                  controller: _idEmpleadoController,
+                  readOnly: true,
                 ),
-              ),
-              TextFormField(
-                decoration: InputDecoration(labelText: 'Importe Total'),
-                keyboardType: TextInputType.number,
-                readOnly: true,
-                controller: TextEditingController(
-                  text: _importeTotal.toStringAsFixed(2),
+                _TextFieldCustom(
+                  icono: Icons.code,
+                  type: TextInputType.text,
+                  texto: 'Código del Producto',
+                  controller: _codigoController,
                 ),
-              ),
-              SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _guardarProforma,
-                child: Text('Guardar'),
-              ),
-            ],
+                _TextFieldCustom(
+                  icono: Icons.description,
+                  type: TextInputType.text,
+                  texto: 'Nombre del Producto',
+                  controller: _nombreController,
+                ),
+                _TextFieldCustom(
+                  icono: Icons.format_list_numbered,
+                  type: TextInputType.number,
+                  texto: 'Cantidad',
+                  controller: _cantidadController,
+                ),
+                _TextFieldCustom(
+                  icono: Icons.monetization_on,
+                  type: TextInputType.number,
+                  texto: 'Precio Unitario',
+                  controller: _precioUnitarioController,
+                ),
+                SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: _agregarProducto,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Color(0xff5511b0),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(50),
+                    ),
+                    padding: EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                  ),
+                  child: Text('Agregar Producto', style: TextStyle(color: Colors.white, fontSize: 18)),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TextFieldCustom extends StatelessWidget {
+  final IconData icono;
+  final TextInputType type;
+  final String texto;
+  final TextEditingController controller;
+  final bool readOnly;
+
+  const _TextFieldCustom({
+    Key? key,
+    required this.icono,
+    required this.type,
+    required this.texto,
+    required this.controller,
+    this.readOnly = false,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10.0),
+      child: TextField(
+        controller: controller,
+        keyboardType: type,
+        readOnly: readOnly,
+        decoration: InputDecoration(
+          hintText: texto,
+          filled: true,
+          fillColor: Color(0xffEBDCFA),
+          prefixIcon: Icon(icono, color: Colors.grey),
+          border: OutlineInputBorder(
+            borderSide: BorderSide(color: Color(0xffEBDCFA)),
+            borderRadius: BorderRadius.circular(50),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderSide: BorderSide(color: Color(0xffEBDCFA)),
+            borderRadius: BorderRadius.circular(50),
           ),
         ),
       ),

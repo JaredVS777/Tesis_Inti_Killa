@@ -193,6 +193,33 @@ class _ClientePageState extends State<ClientePage> {
     );
   }
 
+  void _confirmarEliminacionCliente(int index) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Confirmar Eliminación'),
+          content: Text('¿Seguro quieres eliminar el cliente?'),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('No'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _eliminarCliente(index);
+              },
+              child: Text('Sí'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   void _abrirFormularioCliente({Map<String, dynamic>? cliente, int? index}) async {
     final clienteModificado = await Navigator.push(
       context,
@@ -219,7 +246,9 @@ class _ClientePageState extends State<ClientePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Center(child: Text('CLIENTES')), // Título centrado
+        title: Center(child: Text('CLIENTES', style: TextStyle(color: Colors.white))), // Título centrado y color blanco
+        backgroundColor: Color(0xff5511b0), // Color de fondo del AppBar
+        iconTheme: IconThemeData(color: Colors.white), // Color de las tres líneas del drawer
       ),
       backgroundColor: Color(0xFF0A192F), // Color de fondo
       drawer: _buildDrawer(context),
@@ -241,17 +270,17 @@ class _ClientePageState extends State<ClientePage> {
                   SizedBox(height: 20),
                   TextField(
                     controller: _searchController,
-                    style: TextStyle(color: Colors.white), // Cambiar el color del texto a blanco
+                    style: TextStyle(color: Colors.black), // Cambiar el color del texto a negro
                     decoration: InputDecoration(
                       labelText: 'Buscar por ID',
-                      labelStyle: TextStyle(color: Colors.white),
+                      labelStyle: TextStyle(color: Colors.black),
                       filled: true,
-                      fillColor: Colors.white24, // Fondo del campo de búsqueda
+                      fillColor: Colors.white, // Fondo del campo de búsqueda
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10.0),
                         borderSide: BorderSide.none,
                       ),
-                      prefixIcon: Icon(Icons.search, color: Colors.white),
+                      prefixIcon: Icon(Icons.search, color: Colors.black),
                     ),
                   ),
                   SizedBox(height: 20),
@@ -260,14 +289,14 @@ class _ClientePageState extends State<ClientePage> {
                       _abrirFormularioCliente();
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue, // Color del botón
+                      backgroundColor: Color(0xff5511b0), // Color del botón
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10.0),
                       ),
                     ),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 15.0),
-                      child: Text('+ Agregar clientes', style: TextStyle(fontSize: 16)),
+                      child: Text('+ Agregar clientes', style: TextStyle(fontSize: 16, color: Colors.white)), // Texto en color blanco
                     ),
                   ),
                   SizedBox(height: 20),
@@ -298,108 +327,107 @@ class _ClientePageState extends State<ClientePage> {
     );
   }
 
-Widget _buildDrawer(BuildContext context) {
-  return FutureBuilder<SharedPreferences>(
-    future: SharedPreferences.getInstance(),
-    builder: (BuildContext context, AsyncSnapshot<SharedPreferences> snapshot) {
-      if (!snapshot.hasData) {
-        return CircularProgressIndicator();
-      } else {
-        final prefs = snapshot.data!;
-        final nombre = prefs.getString('nombre') ?? 'Usuario';
-        final apellido = prefs.getString('apellido') ?? '';
+  Widget _buildDrawer(BuildContext context) {
+    return FutureBuilder<SharedPreferences>(
+      future: SharedPreferences.getInstance(),
+      builder: (BuildContext context, AsyncSnapshot<SharedPreferences> snapshot) {
+        if (!snapshot.hasData) {
+          return CircularProgressIndicator();
+        } else {
+          final prefs = snapshot.data!;
+          final nombre = prefs.getString('nombre') ?? 'Usuario';
+          final apellido = prefs.getString('apellido') ?? '';
 
-        return Drawer(
-          child: ListView(
-            padding: EdgeInsets.zero,
-            children: <Widget>[
-              UserAccountsDrawerHeader(
-                accountName: Text('$nombre $apellido'),
-                accountEmail: Text('USUARIO'),
-                decoration: BoxDecoration(
-                  color: Color(0xff5511b0),
-                ),
-                currentAccountPicture: CircleAvatar(
-                  backgroundColor: Colors.white,
-                  child: Text(
-                    nombre.isNotEmpty ? nombre[0] : 'U',
-                    style: TextStyle(fontSize: 40.0),
+          return Drawer(
+            child: ListView(
+              padding: EdgeInsets.zero,
+              children: <Widget>[
+                UserAccountsDrawerHeader(
+                  accountName: Text('$nombre $apellido'),
+                  accountEmail: Text('USUARIO'),
+                  decoration: BoxDecoration(
+                    color: Color(0xff5511b0),
+                  ),
+                  currentAccountPicture: CircleAvatar(
+                    backgroundColor: Colors.white,
+                    child: Text(
+                      nombre.isNotEmpty ? nombre[0] : 'U',
+                      style: TextStyle(fontSize: 40.0),
+                    ),
                   ),
                 ),
-              ),
-              ListTile(
-                leading: Icon(Icons.person),
-                title: Text('Clientes'),
-                onTap: () {
-                  Navigator.pushNamed(context, '/cliente');
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.description),
-                title: Text('Proformas'),
-                onTap: () {
-                  Navigator.pushNamed(context, '/proforma');
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.receipt),
-                title: Text('Facturas'),
-                onTap: () {
-                  Navigator.pushNamed(context, '/factura');
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.logout),
-                title: Text('Cerrar sesión'),
-                onTap: () async {
-                  SharedPreferences prefs = await SharedPreferences.getInstance();
-                  await prefs.remove('token');
-                  await prefs.remove('nombre');
-                  await prefs.remove('apellido');
-                  await prefs.remove('username');
-                  await prefs.remove('_id');
-                  await prefs.remove('email');
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (context) => LoginPage()),
-                  );
-                },
-              ),
-            ],
-          ),
-        );
-      }
-    },
-  );
-}
-
+                ListTile(
+                  leading: Icon(Icons.person),
+                  title: Text('Clientes'),
+                  onTap: () {
+                    Navigator.pushNamed(context, '/cliente');
+                  },
+                ),
+                ListTile(
+                  leading: Icon(Icons.description),
+                  title: Text('Proformas'),
+                  onTap: () {
+                    Navigator.pushNamed(context, '/proforma');
+                  },
+                ),
+                ListTile(
+                  leading: Icon(Icons.receipt),
+                  title: Text('Facturas'),
+                  onTap: () {
+                    Navigator.pushNamed(context, '/factura');
+                  },
+                ),
+                ListTile(
+                  leading: Icon(Icons.logout),
+                  title: Text('Cerrar sesión'),
+                  onTap: () async {
+                    SharedPreferences prefs = await SharedPreferences.getInstance();
+                    await prefs.remove('token');
+                    await prefs.remove('nombre');
+                    await prefs.remove('apellido');
+                    await prefs.remove('username');
+                    await prefs.remove('_id');
+                    await prefs.remove('email');
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => LoginPage()),
+                    );
+                  },
+                ),
+              ],
+            ),
+          );
+        }
+      },
+    );
+  }
 
   Widget _buildClienteCard(String id, String nombre, String cedula, String telefono, String direccion, String email, String tipodoc, int index) {
     final tipoDoc = _tipoDocMap[tipodoc] ?? 'Tipo de identificación no disponible';
     return Card(
-      color: Colors.white24,
+      color: Colors.white, // Fondo de la tarjeta
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10.0),
       ),
       child: ListTile(
-        title: Text(nombre, style: TextStyle(color: Colors.white)),
+        title: Text(nombre, style: TextStyle(color: Colors.black)), // Texto en negro
         subtitle: Text(
           'ID: $id\nCédula: $cedula\nTeléfono: $telefono\nDirección: $direccion\nEmail: $email\nTipo de Identificación: $tipoDoc',
-          style: TextStyle(color: Colors.white70),
+          style: TextStyle(color: Colors.black), // Texto en negro más claro
         ),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
-              icon: Icon(Icons.edit, color: Colors.white),
+              icon: Icon(Icons.edit, color: Colors.black),
               onPressed: () {
                 _confirmarModificacionCliente(_clientesFiltrados[index], index);
               },
             ),
             IconButton(
-              icon: Icon(Icons.delete, color: Colors.white),
+              icon: Icon(Icons.delete, color: Colors.black),
               onPressed: () {
-                _eliminarCliente(index);
+                _confirmarEliminacionCliente(index);
               },
             ),
           ],

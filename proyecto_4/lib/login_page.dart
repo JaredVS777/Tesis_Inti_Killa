@@ -22,7 +22,8 @@ class LoginPage extends StatelessWidget {
               _LogoHeader(),
             ],
           ),
-          SizedBox(height: 40),
+          _Titulo(), // Añadido el título aquí
+          SizedBox(height: 20),
           _UsernameAndPassword(
             usernameController: usernameController,
             passwordController: passwordController,
@@ -81,11 +82,24 @@ class _ForgotPassword extends StatelessWidget {
   }
 }
 
-class _UsernameAndPassword extends StatelessWidget {
+class _UsernameAndPassword extends StatefulWidget {
   final TextEditingController usernameController;
   final TextEditingController passwordController;
 
   _UsernameAndPassword({required this.usernameController, required this.passwordController});
+
+  @override
+  __UsernameAndPasswordState createState() => __UsernameAndPasswordState();
+}
+
+class __UsernameAndPasswordState extends State<_UsernameAndPassword> {
+  bool _obscureText = true;
+
+  void _togglePasswordView() {
+    setState(() {
+      _obscureText = !_obscureText;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -93,11 +107,11 @@ class _UsernameAndPassword extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 20.0),
       child: Column(
         children: [
-          _TextFieldCustom(icono: Icons.person_outline, type: TextInputType.text, texto: 'Usuario', controller: usernameController),
+          _TextFieldCustom(icono: Icons.person_outline, type: TextInputType.text, texto: 'Usuario', controller: widget.usernameController),
           Align(
             alignment: Alignment.centerRight,
             child: GestureDetector(
-              onTap: () {
+              onTap: () { 
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => RecuperacionUsuarioPage()),
@@ -113,7 +127,32 @@ class _UsernameAndPassword extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 20),
-          _TextFieldCustom(icono: Icons.lock, type: TextInputType.text, pass: true, texto: 'Contraseña', controller: passwordController),
+          TextField(
+            controller: widget.passwordController,
+            keyboardType: TextInputType.text,
+            obscureText: _obscureText,
+            decoration: InputDecoration(
+              hintText: 'Contraseña',
+              filled: true,
+              fillColor: Color(0xffEBDCFA),
+              prefixIcon: Icon(Icons.lock, color: Colors.grey),
+              border: OutlineInputBorder(
+                borderSide: BorderSide(color: Color(0xffEBDCFA)),
+                borderRadius: BorderRadius.circular(50),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: Color(0xffEBDCFA)),
+                borderRadius: BorderRadius.circular(50),
+              ),
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _obscureText ? Icons.visibility : Icons.visibility_off,
+                  color: Colors.grey,
+                ),
+                onPressed: _togglePasswordView,
+              ),
+            ),
+          ),
           Align(
             alignment: Alignment.centerRight,
             child: GestureDetector(
@@ -237,4 +276,21 @@ class _HeaderLoginPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}
+
+class _Titulo extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(15.0),
+      child: Row(
+        children: [
+          Text(
+            'Iniciar sesión',
+            style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold, color: Colors.white),
+          ),
+        ],
+      ),
+    );
+  }
 }

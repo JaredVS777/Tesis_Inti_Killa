@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'api_service.dart';
-import 'factura_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class FormularioFacturaPage extends StatefulWidget {
@@ -16,9 +15,9 @@ class _FormularioFacturaPageState extends State<FormularioFacturaPage> {
   final TextEditingController _precioUnitarioController = TextEditingController();
   final TextEditingController _totalDescuentoController = TextEditingController();
   final TextEditingController _metodoPagoController = TextEditingController();
+  final TextEditingController _idEmpleadoController = TextEditingController();
 
   String _idCliente = '';
-  String _idEmpleado = '';
   List<Map<String, dynamic>> _productos = [];
   double _totalSinImpuestos = 0.0;
   double _totalDescuento = 0.0;
@@ -55,11 +54,11 @@ class _FormularioFacturaPageState extends State<FormularioFacturaPage> {
 
   Future<void> _setEmpleadoId() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? idEmpleado = prefs.getString('idEmpleado');
+    String? idEmpleado = prefs.getString('_id');  // Usamos '_id' ya que es el identificador del empleado
 
     if (idEmpleado != null) {
       setState(() {
-        _idEmpleado = idEmpleado;
+        _idEmpleadoController.text = idEmpleado;  // Establecer el ID del empleado en el controlador del campo de texto
       });
     }
   }
@@ -105,7 +104,110 @@ class _FormularioFacturaPageState extends State<FormularioFacturaPage> {
         // Calcular el total sin impuestos
         _calcularTotalSinImpuestos();
       });
+
+      // Mostrar el BottomSheet con la tabla de productos y los campos adicionales
+      _mostrarBottomSheet();
     }
+  }
+
+  void _mostrarBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (BuildContext context) {
+        return Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: DataTable(
+                    columns: [
+                      DataColumn(label: Text('Código')),
+                      DataColumn(label: Text('Nombre')),
+                      DataColumn(label: Text('Cantidad')),
+                      DataColumn(label: Text('Precio Unitario')),
+                      DataColumn(label: Text('Acciones')),
+                    ],
+                    rows: _productos.map((producto) {
+                      return DataRow(cells: [
+                        DataCell(Text(producto['codigo'])),
+                        DataCell(Text(producto['nombre'])),
+                        DataCell(Text(producto['cantidad'].toString())),
+                        DataCell(Text(producto['precioUnitario'].toString())),
+                        DataCell(
+                          IconButton(
+                            icon: Icon(Icons.delete),
+                            onPressed: () {
+                              setState(() {
+                                _productos.remove(producto);
+                                _calcularTotalSinImpuestos();
+                                Navigator.pop(context); // Cerrar el BottomSheet
+                                _mostrarBottomSheet(); // Volver a mostrar el BottomSheet actualizado
+                              });
+                            },
+                          ),
+                        ),
+                      ]);
+                    }).toList(),
+                  ),
+                ),
+                _TextFieldCustom(
+                  icono: Icons.money,
+                  type: TextInputType.number,
+                  texto: 'Total sin Impuestos',
+                  controller: TextEditingController(
+                    text: _totalSinImpuestos.toStringAsFixed(2),
+                  ),
+                  readOnly: true,
+                ),
+                _TextFieldCustom(
+                  icono: Icons.money_off,
+                  type: TextInputType.number,
+                  texto: 'Total Descuento',
+                  controller: _totalDescuentoController,
+                ),
+                _TextFieldCustom(
+                  icono: Icons.attach_money,
+                  type: TextInputType.number,
+                  texto: 'Total Impuesto Valor',
+                  controller: TextEditingController(
+                    text: _totalImpuestoValor.toStringAsFixed(2),
+                  ),
+                  readOnly: true,
+                ),
+                _TextFieldCustom(
+                  icono: Icons.money,
+                  type: TextInputType.number,
+                  texto: 'Importe Total',
+                  controller: TextEditingController(
+                    text: _importeTotal.toStringAsFixed(2),
+                  ),
+                  readOnly: true,
+                ),
+                SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context); // Cerrar el BottomSheet
+                    _guardarFactura();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Color(0xff5511b0),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(50),
+                    ),
+                    padding: EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                  ),
+                  child: Text('Guardar Factura', style: TextStyle(color: Colors.white, fontSize: 18)),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   Future<void> _guardarFactura() async {
@@ -127,7 +229,7 @@ class _FormularioFacturaPageState extends State<FormularioFacturaPage> {
           Map<String, dynamic> response = await ApiService.agregarFactura(
             token: token,
             idCliente: _idCliente,
-            idEmpleado: _idEmpleado,
+            idEmpleado: _idEmpleadoController.text,
             productos: _productos,
             totalSinImpuestos: _totalSinImpuestos,
             totalDescuento: _totalDescuento,
@@ -160,150 +262,144 @@ class _FormularioFacturaPageState extends State<FormularioFacturaPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Formulario de Facturas'),
+        backgroundColor: Color(0xff5511b0),
       ),
-      body: Padding(
+      backgroundColor: Color(0xFF0A192F),
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            children: <Widget>[
-              DropdownButtonFormField(
-                decoration: InputDecoration(labelText: 'ID Cliente'),
-                value: _idCliente.isNotEmpty ? _idCliente : null,
-                items: _clientes.map<DropdownMenuItem<String>>((cliente) {
-                  return DropdownMenuItem<String>(
-                    value: cliente['_id'],
-                    child: Text(cliente['_id']),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _idCliente = value as String;
-                  });
-                },
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor, seleccione un cliente';
-                  }
-                  return null;
-                },
-              ),
-              TextFormField(
-                decoration: InputDecoration(labelText: 'ID Empleado'),
-                initialValue: _idEmpleado,
-                onChanged: (value) {
-                  setState(() {
-                    _idEmpleado = value;
-                  });
-                },
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor, ingrese el ID del empleado';
-                  }
-                  return null;
-                },
-              ),
-              TextFormField(
-                controller: _codigoController,
-                decoration: InputDecoration(labelText: 'Código del Producto'),
-              ),
-              TextFormField(
-                controller: _nombreController,
-                decoration: InputDecoration(labelText: 'Nombre del Producto'),
-              ),
-              TextFormField(
-                controller: _cantidadController,
-                decoration: InputDecoration(labelText: 'Cantidad'),
-                keyboardType: TextInputType.number,
-              ),
-              TextFormField(
-                controller: _precioUnitarioController,
-                decoration: InputDecoration(labelText: 'Precio Unitario'),
-                keyboardType: TextInputType.number,
-              ),
-              TextFormField(
-                controller: _metodoPagoController,
-                decoration: InputDecoration(labelText: 'Método de Pago'),
-              ),
-              SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _agregarProducto,
-                child: Text('Agregar Producto'),
-              ),
-              SizedBox(height: 20),
-              DataTable(
-                columns: [
-                  DataColumn(label: Text('Código')),
-                  DataColumn(label: Text('Nombre')),
-                  DataColumn(label: Text('Cantidad')),
-                  DataColumn(label: Text('Precio Unitario')),
-                  DataColumn(label: Text('Acciones')),
-                ],
-                rows: _productos.map((producto) {
-                  return DataRow(cells: [
-                    DataCell(Text(producto['codigo'])),
-                    DataCell(Text(producto['nombre'])),
-                    DataCell(Text(producto['cantidad'].toString())),
-                    DataCell(Text(producto['precioUnitario'].toString())),
-                    DataCell(
-                      IconButton(
-                        icon: Icon(Icons.delete),
-                        onPressed: () {
-                          setState(() {
-                            _productos.remove(producto);
-                            _calcularTotalSinImpuestos();
-                          });
-                        },
-                      ),
+        child: Center(
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                DropdownButtonFormField(
+                  value: _idCliente.isNotEmpty ? _idCliente : null,
+                  hint: Text('Seleccione ID Cliente', style: TextStyle(color: Colors.grey)),
+                  items: _clientes.map<DropdownMenuItem<String>>((cliente) {
+                    return DropdownMenuItem<String>(
+                      value: cliente['_id'],
+                      child: Text(cliente['_id'], style: TextStyle(color: Colors.black)),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _idCliente = value as String;
+                    });
+                  },
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Por favor, seleccione un cliente';
+                    }
+                    return null;
+                  },
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: Color(0xffEBDCFA),
+                    border: OutlineInputBorder(
+                      borderSide: BorderSide(color: Color(0xffEBDCFA)),
+                      borderRadius: BorderRadius.circular(50),
                     ),
-                  ]);
-                }).toList(),
-              ),
-              TextFormField(
-                decoration: InputDecoration(labelText: 'Total sin Impuestos'),
-                keyboardType: TextInputType.number,
-                readOnly: true,
-                controller: TextEditingController(
-                  text: _totalSinImpuestos.toStringAsFixed(2),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Color(0xffEBDCFA)),
+                      borderRadius: BorderRadius.circular(50),
+                    ),
+                  ),
                 ),
-              ),
-              TextFormField(
-                controller: _totalDescuentoController,
-                decoration: InputDecoration(labelText: 'Total Descuento'),
-                keyboardType: TextInputType.number,
-                onSaved: (value) {
-                  _totalDescuento = double.tryParse(value ?? '0.0') ?? 0.0;
-                  _actualizarTotales();
-                },
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor, ingrese el total descuento';
-                  }
-                  return null;
-                },
-              ),
-              TextFormField(
-                decoration: InputDecoration(labelText: 'Total Impuesto Valor'),
-                keyboardType: TextInputType.number,
-                readOnly: true,
-                controller: TextEditingController(
-                  text: _totalImpuestoValor.toStringAsFixed(2),
+                _TextFieldCustom(
+                  icono: Icons.badge,
+                  type: TextInputType.text,
+                  texto: 'ID Empleado',
+                  controller: _idEmpleadoController,
+                  readOnly: true,  // Hacer que el campo no sea editable
                 ),
-              ),
-              TextFormField(
-                decoration: InputDecoration(labelText: 'Importe Total'),
-                keyboardType: TextInputType.number,
-                readOnly: true,
-                controller: TextEditingController(
-                  text: _importeTotal.toStringAsFixed(2),
+                _TextFieldCustom(
+                  icono: Icons.code,
+                  type: TextInputType.text,
+                  texto: 'Código del Producto',
+                  controller: _codigoController,
                 ),
-              ),
-              SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _guardarFactura,
-                child: Text('Guardar'),
-              ),
-            ],
+                _TextFieldCustom(
+                  icono: Icons.label,
+                  type: TextInputType.text,
+                  texto: 'Nombre del Producto',
+                  controller: _nombreController,
+                ),
+                _TextFieldCustom(
+                  icono: Icons.format_list_numbered,
+                  type: TextInputType.number,
+                  texto: 'Cantidad',
+                  controller: _cantidadController,
+                ),
+                _TextFieldCustom(
+                  icono: Icons.attach_money,
+                  type: TextInputType.number,
+                  texto: 'Precio Unitario',
+                  controller: _precioUnitarioController,
+                ),
+                _TextFieldCustom(
+                  icono: Icons.payment,
+                  type: TextInputType.text,
+                  texto: 'Método de Pago',
+                  controller: _metodoPagoController,
+                ),
+                SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: _agregarProducto,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Color(0xff5511b0),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(50),
+                    ),
+                    padding: EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                  ),
+                  child: Text('Agregar Producto', style: TextStyle(color: Colors.white, fontSize: 18)),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TextFieldCustom extends StatelessWidget {
+  final IconData icono;
+  final TextInputType type;
+  final String texto;
+  final TextEditingController controller;
+  final bool readOnly;
+
+  const _TextFieldCustom({
+    Key? key,
+    required this.icono,
+    required this.type,
+    required this.texto,
+    required this.controller,
+    this.readOnly = false,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10.0),
+      child: TextField(
+        controller: controller,
+        keyboardType: type,
+        readOnly: readOnly,
+        decoration: InputDecoration(
+          hintText: texto,
+          filled: true,
+          fillColor: Color(0xffEBDCFA),
+          prefixIcon: Icon(icono, color: Colors.grey),
+          border: OutlineInputBorder(
+            borderSide: BorderSide(color: Color(0xffEBDCFA)),
+            borderRadius: BorderRadius.circular(50),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderSide: BorderSide(color: Color(0xffEBDCFA)),
+            borderRadius: BorderRadius.circular(50),
           ),
         ),
       ),

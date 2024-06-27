@@ -46,7 +46,6 @@ class _FormularioClientePageState extends State<FormularioClientePage> {
     _direccionController = TextEditingController(text: widget.cliente?['direccion'] ?? '');
     _emailController = TextEditingController(text: widget.cliente?['email'] ?? '');
 
-    // Verificar que el valor inicial de _selectedTipoDoc sea válido
     if (widget.cliente?['tipodoc'] != null && _tipoDocMap.containsValue(widget.cliente!['tipodoc'])) {
       _selectedTipoDoc = _tipoDocMap.entries.firstWhere((element) => element.value == widget.cliente!['tipodoc']).key;
     }
@@ -67,15 +66,12 @@ class _FormularioClientePageState extends State<FormularioClientePage> {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String? token = prefs.getString('token');
       if (token == null) {
-        // Handle authentication error
         return;
       }
 
       bool success;
       try {
         if (widget.cliente == null) {
-          print('Intentando guardar un nuevo cliente');
-          print('Datos del cliente: ${_nombreController.text}, ${_cedulaController.text}, ${_telefonoController.text}, ${_direccionController.text}, ${_emailController.text}, $_selectedTipoDoc');
           success = await ApiService.guardarCliente(
             token: token,
             nombre: _nombreController.text,
@@ -83,15 +79,13 @@ class _FormularioClientePageState extends State<FormularioClientePage> {
             telefono: _telefonoController.text,
             direccion: _direccionController.text,
             email: _emailController.text,
-            tipodoc: _tipoDocMap[_selectedTipoDoc]!, // Asegúrate de enviar el tipodoc seleccionado
+            tipodoc: _tipoDocMap[_selectedTipoDoc]!,
           );
         } else {
           final clienteId = widget.cliente!['_id'].toString();
           if (clienteId.isEmpty) {
             throw Exception('El ID del cliente no puede estar vacío');
           }
-          print('Intentando modificar el cliente con ID: $clienteId');
-          print('Datos del cliente: ${_nombreController.text}, ${_cedulaController.text}, ${_telefonoController.text}, ${_direccionController.text}, ${_emailController.text}, $_selectedTipoDoc');
           success = await ApiService.modificarCliente(
             token: token,
             id: clienteId,
@@ -100,7 +94,7 @@ class _FormularioClientePageState extends State<FormularioClientePage> {
             telefono: _telefonoController.text,
             direccion: _direccionController.text,
             email: _emailController.text,
-            tipodoc: _tipoDocMap[_selectedTipoDoc]!, // Asegúrate de enviar el tipodoc seleccionado
+            tipodoc: _tipoDocMap[_selectedTipoDoc]!,
           );
         }
 
@@ -112,7 +106,7 @@ class _FormularioClientePageState extends State<FormularioClientePage> {
             'telefono': _telefonoController.text,
             'direccion': _direccionController.text,
             'email': _emailController.text,
-            'tipodoc': _tipoDocMap[_selectedTipoDoc], // Asegúrate de incluir el tipodoc
+            'tipodoc': _tipoDocMap[_selectedTipoDoc],
           };
 
           Navigator.pop(context, clienteModificado);
@@ -138,101 +132,134 @@ class _FormularioClientePageState extends State<FormularioClientePage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.cliente != null ? 'Modificar Cliente' : 'Nuevo Cliente'),
+        backgroundColor: Color(0xff5511b0),
       ),
-      body: Padding(
+      backgroundColor: Color(0xFF0A192F),
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Center(
-          child: SizedBox(
-            width: 300,
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  Icon(
-                    Icons.person,
-                    size: 120,
-                    color: Theme.of(context).primaryColor,
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                _TextFieldCustom(
+                  icono: Icons.person_outline,
+                  type: TextInputType.text,
+                  texto: 'Nombre',
+                  controller: _nombreController,
+                ),
+                _TextFieldCustom(
+                  icono: Icons.credit_card,
+                  type: TextInputType.number,
+                  texto: 'Cédula',
+                  controller: _cedulaController,
+                ),
+                _TextFieldCustom(
+                  icono: Icons.phone,
+                  type: TextInputType.phone,
+                  texto: 'Teléfono',
+                  controller: _telefonoController,
+                ),
+                _TextFieldCustom(
+                  icono: Icons.location_on,
+                  type: TextInputType.text,
+                  texto: 'Dirección',
+                  controller: _direccionController,
+                ),
+                _TextFieldCustom(
+                  icono: Icons.email,
+                  type: TextInputType.emailAddress,
+                  texto: 'Email',
+                  controller: _emailController,
+                ),
+                DropdownButtonFormField<String>(
+                  value: _selectedTipoDoc,
+                  hint: Text('Seleccione tipo de identificación', style: TextStyle(color: Colors.grey)),
+                  items: _tipoDocList.map((String value) {
+                    return DropdownMenuItem<String>(
+                      value: value,
+                      child: Text(value, style: TextStyle(color: Colors.black)),
+                    );
+                  }).toList(),
+                  onChanged: (newValue) {
+                    setState(() {
+                      _selectedTipoDoc = newValue;
+                    });
+                  },
+                  validator: (value) {
+                    if (value == null) {
+                      return 'Por favor seleccione un tipo de identificación';
+                    }
+                    return null;
+                  },
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: Color(0xffEBDCFA),
+                    border: OutlineInputBorder(
+                      borderSide: BorderSide(color: Color(0xffEBDCFA)),
+                      borderRadius: BorderRadius.circular(50),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Color(0xffEBDCFA)),
+                      borderRadius: BorderRadius.circular(50),
+                    ),
                   ),
-                  TextFormField(
-                    controller: _nombreController,
-                    decoration: InputDecoration(labelText: 'Nombre'),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Por favor ingrese un nombre';
-                      }
-                      return null;
-                    },
+                ),
+                SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: _guardarCliente,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Color(0xff5511b0),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(50),
+                    ),
+                    padding: EdgeInsets.symmetric(horizontal: 50, vertical: 15),
                   ),
-                  TextFormField(
-                    controller: _cedulaController,
-                    decoration: InputDecoration(labelText: 'Cédula'),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Por favor ingrese una cédula';
-                      }
-                      return null;
-                    },
-                  ),
-                  TextFormField(
-                    controller: _telefonoController,
-                    decoration: InputDecoration(labelText: 'Teléfono'),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Por favor ingrese un teléfono';
-                      }
-                      return null;
-                    },
-                  ),
-                  TextFormField(
-                    controller: _direccionController,
-                    decoration: InputDecoration(labelText: 'Dirección'),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Por favor ingrese una dirección';
-                      }
-                      return null;
-                    },
-                  ),
-                  TextFormField(
-                    controller: _emailController,
-                    decoration: InputDecoration(labelText: 'Email'),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Por favor ingrese un email';
-                      }
-                      return null;
-                    },
-                  ),
-                  DropdownButtonFormField<String>(
-                    value: _selectedTipoDoc,
-                    hint: Text('Seleccione Tipo de Identificación'),
-                    items: _tipoDocList.map((String value) {
-                      return DropdownMenuItem<String>(
-                        value: value,
-                        child: Text(value),
-                      );
-                    }).toList(),
-                    onChanged: (newValue) {
-                      setState(() {
-                        _selectedTipoDoc = newValue;
-                      });
-                    },
-                    validator: (value) {
-                      if (value == null) {
-                        return 'Por favor seleccione un tipo de identificación';
-                      }
-                      return null;
-                    },
-                  ),
-                  SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: _guardarCliente,
-                    child: Text('Guardar Cliente'),
-                  ),
-                ],
-              ),
+                  child: Text('Guardar Cliente', style: TextStyle(color: Colors.white, fontSize: 18)),
+                ),
+              ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TextFieldCustom extends StatelessWidget {
+  final IconData icono;
+  final TextInputType type;
+  final String texto;
+  final TextEditingController controller;
+
+  const _TextFieldCustom({
+    Key? key,
+    required this.icono,
+    required this.type,
+    required this.texto,
+    required this.controller,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10.0),
+      child: TextField(
+        controller: controller,
+        keyboardType: type,
+        decoration: InputDecoration(
+          hintText: texto,
+          filled: true,
+          fillColor: Color(0xffEBDCFA),
+          prefixIcon: Icon(icono, color: Colors.grey),
+          border: OutlineInputBorder(
+            borderSide: BorderSide(color: Color(0xffEBDCFA)),
+            borderRadius: BorderRadius.circular(50),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderSide: BorderSide(color: Color(0xffEBDCFA)),
+            borderRadius: BorderRadius.circular(50),
           ),
         ),
       ),
