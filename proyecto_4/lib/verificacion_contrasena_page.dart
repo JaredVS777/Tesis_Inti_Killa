@@ -106,7 +106,7 @@ class _BottonRecuperar extends StatelessWidget {
   }
 }
 
-class _VerificationFields extends StatelessWidget {
+class _VerificationFields extends StatefulWidget {
   final TextEditingController verificationCodeController;
   final TextEditingController newPasswordController;
   final TextEditingController confirmNewPasswordController;
@@ -118,16 +118,91 @@ class _VerificationFields extends StatelessWidget {
   });
 
   @override
+  __VerificationFieldsState createState() => __VerificationFieldsState();
+}
+
+class __VerificationFieldsState extends State<_VerificationFields> {
+  bool _obscureNewPassword = true;
+  bool _obscureConfirmNewPassword = true;
+
+  void _toggleNewPasswordView() {
+    setState(() {
+      _obscureNewPassword = !_obscureNewPassword;
+    });
+  }
+
+  void _toggleConfirmNewPasswordView() {
+    setState(() {
+      _obscureConfirmNewPassword = !_obscureConfirmNewPassword;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0),
       child: Column(
         children: [
-          _TextFieldCustom(icono: Icons.verified, type: TextInputType.text, texto: 'Código de Verificación', controller: verificationCodeController),
+          _TextFieldCustom(
+            icono: Icons.verified,
+            type: TextInputType.text,
+            texto: 'Código de Verificación',
+            controller: widget.verificationCodeController,
+          ),
           SizedBox(height: 10),
-          _TextFieldCustom(icono: Icons.lock, type: TextInputType.text, pass: true, texto: 'Nueva Contraseña', controller: newPasswordController),
+          TextField(
+            controller: widget.newPasswordController,
+            keyboardType: TextInputType.text,
+            obscureText: _obscureNewPassword,
+            decoration: InputDecoration(
+              hintText: 'Nueva Contraseña',
+              filled: true,
+              fillColor: Color(0xffEBDCFA),
+              prefixIcon: Icon(Icons.lock, color: Colors.grey),
+              border: OutlineInputBorder(
+                borderSide: BorderSide(color: Color(0xffEBDCFA)),
+                borderRadius: BorderRadius.circular(50),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: Color(0xffEBDCFA)),
+                borderRadius: BorderRadius.circular(50),
+              ),
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _obscureNewPassword ? Icons.visibility : Icons.visibility_off,
+                  color: Colors.grey,
+                ),
+                onPressed: _toggleNewPasswordView,
+              ),
+            ),
+          ),
           SizedBox(height: 10),
-          _TextFieldCustom(icono: Icons.lock, type: TextInputType.text, pass: true, texto: 'Confirmar Nueva Contraseña', controller: confirmNewPasswordController),
+          TextField(
+            controller: widget.confirmNewPasswordController,
+            keyboardType: TextInputType.text,
+            obscureText: _obscureConfirmNewPassword,
+            decoration: InputDecoration(
+              hintText: 'Confirmar Nueva Contraseña',
+              filled: true,
+              fillColor: Color(0xffEBDCFA),
+              prefixIcon: Icon(Icons.lock, color: Colors.grey),
+              border: OutlineInputBorder(
+                borderSide: BorderSide(color: Color(0xffEBDCFA)),
+                borderRadius: BorderRadius.circular(50),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: Color(0xffEBDCFA)),
+                borderRadius: BorderRadius.circular(50),
+              ),
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _obscureConfirmNewPassword ? Icons.visibility : Icons.visibility_off,
+                  color: Colors.grey,
+                ),
+                onPressed: _toggleConfirmNewPasswordView,
+              ),
+            ),
+          ),
         ],
       ),
     );
