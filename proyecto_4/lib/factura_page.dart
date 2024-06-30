@@ -89,7 +89,8 @@ class _FacturaPageState extends State<FacturaPage> {
                         children: [
                           Text('ID Cliente: ${factura['id_cliente']}', style: TextStyle(color: Colors.black)),
                           Text('ID Empleado: ${factura['id_empleado']}', style: TextStyle(color: Colors.black)),
-                          Text('Productos: ${factura['productos']}', style: TextStyle(color: Colors.black)),
+                          Text('Productos:', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+                          ..._buildProductList(factura['productos']),
                           Text('Total sin Impuestos: ${factura['totalSinImpuestos']}', style: TextStyle(color: Colors.black)),
                           Text('Total Descuento: ${factura['totalDescuento']}', style: TextStyle(color: Colors.black)),
                           Text('Total Impuesto Valor: ${factura['totalImpuestoValor']}', style: TextStyle(color: Colors.black)),
@@ -106,6 +107,23 @@ class _FacturaPageState extends State<FacturaPage> {
         ),
       ),
     );
+  }
+
+  List<Widget> _buildProductList(List<dynamic> productos) {
+    return productos.map((producto) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 5.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Código: ${producto['codigo']}', style: TextStyle(color: Colors.black)),
+            Text('Nombre: ${producto['nombre']}', style: TextStyle(color: Colors.black)),
+            Text('Cantidad: ${producto['cantidad']}', style: TextStyle(color: Colors.black)),
+            Text('Precio Unitario: ${producto['precioUnitario']}', style: TextStyle(color: Colors.black)),
+          ],
+        ),
+      );
+    }).toList();
   }
 
   Widget _buildDrawer(BuildContext context) {

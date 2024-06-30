@@ -67,7 +67,7 @@ class _ProformaPageState extends State<ProformaPage> {
               ),
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 15.0),
-                child: Text('+ Agregar proformas', style: TextStyle(fontSize: 16, color: Colors.white)), // Texto en color blanco
+                child: Text('+ Agregar Proforma', style: TextStyle(fontSize: 16, color: Colors.white)), // Texto en color blanco
               ),
             ),
             SizedBox(height: 20),
@@ -89,7 +89,8 @@ class _ProformaPageState extends State<ProformaPage> {
                         children: [
                           Text('ID Cliente: ${proforma['id_cliente']}', style: TextStyle(color: Colors.black)),
                           Text('ID Empleado: ${proforma['id_empleado']}', style: TextStyle(color: Colors.black)),
-                          Text('Productos: ${proforma['products']}', style: TextStyle(color: Colors.black)),
+                          Text('Productos:', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+                          ..._buildProductList(proforma['productos']),
                           Text('Total sin Impuestos: ${proforma['totalSinImpuestos']}', style: TextStyle(color: Colors.black)),
                           Text('Total Descuento: ${proforma['totalDescuento']}', style: TextStyle(color: Colors.black)),
                           Text('Total Impuesto Valor: ${proforma['totalImpuestoValor']}', style: TextStyle(color: Colors.black)),
@@ -105,6 +106,23 @@ class _ProformaPageState extends State<ProformaPage> {
         ),
       ),
     );
+  }
+
+  List<Widget> _buildProductList(List<dynamic> productos) {
+    return productos.map((producto) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 5.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Código: ${producto['codigo']}', style: TextStyle(color: Colors.black)),
+            Text('Nombre: ${producto['nombre']}', style: TextStyle(color: Colors.black)),
+            Text('Cantidad: ${producto['cantidad']}', style: TextStyle(color: Colors.black)),
+            Text('Precio Unitario: ${producto['precioUnitario']}', style: TextStyle(color: Colors.black)),
+          ],
+        ),
+      );
+    }).toList();
   }
 
   Widget _buildDrawer(BuildContext context) {
