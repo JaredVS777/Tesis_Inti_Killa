@@ -11,35 +11,59 @@ class ProformaPage extends StatefulWidget {
 
 class _ProformaPageState extends State<ProformaPage> {
   List<dynamic> _proformas = [];
+  List<dynamic> _proformasFiltradas = [];
+  TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _fetchProformas();
+    _searchController.addListener(_onSearchChanged);
+  }
+
+  @override
+  void dispose() {
+    _searchController.removeListener(_onSearchChanged);
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<void> _fetchProformas() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? token = prefs.getString('token');
-    
+
     if (token != null) {
       List<dynamic> proformas = await ApiService.fetchProformas(token);
       setState(() {
         _proformas = proformas;
+        _proformasFiltradas = proformas;
       });
     }
   }
 
-  Future<void> _navegarAFormularioProforma() async {
-  final result = await Navigator.push(
-    context,
-    MaterialPageRoute(builder: (context) => FormularioProformaPage()),
-  );
-
-  if (result == true) {
-    _fetchProformas(); // Recargar la lista de proformas
+  void _onSearchChanged() {
+    final query = _searchController.text.toLowerCase();
+    setState(() {
+      if (query.isEmpty) {
+        _proformasFiltradas = _proformas;
+      } else {
+        _proformasFiltradas = _proformas.where((proforma) {
+          return proforma['id_cliente'].toString().contains(query);
+        }).toList();
+      }
+    });
   }
-}
+
+  Future<void> _navegarAFormularioProforma() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => FormularioProformaPage()),
+    );
+
+    if (result == true) {
+      _fetchProformas();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -57,6 +81,22 @@ class _ProformaPageState extends State<ProformaPage> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             SizedBox(height: 20),
+            TextField(
+              controller: _searchController,
+              style: TextStyle(color: Colors.black), // Cambiar el color del texto a negro
+              decoration: InputDecoration(
+                labelText: 'Buscar por ID Cliente',
+                labelStyle: TextStyle(color: Colors.black),
+                filled: true,
+                fillColor: Colors.white, // Fondo del campo de búsqueda
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10.0),
+                  borderSide: BorderSide.none,
+                ),
+                prefixIcon: Icon(Icons.search, color: Colors.black),
+              ),
+            ),
+            SizedBox(height: 20),
             ElevatedButton(
               onPressed: _navegarAFormularioProforma,
               style: ElevatedButton.styleFrom(
@@ -73,9 +113,9 @@ class _ProformaPageState extends State<ProformaPage> {
             SizedBox(height: 20),
             Expanded(
               child: ListView.builder(
-                itemCount: _proformas.length,
+                itemCount: _proformasFiltradas.length,
                 itemBuilder: (context, index) {
-                  var proforma = _proformas[index];
+                  var proforma = _proformasFiltradas[index];
                   return Card(
                     color: Colors.white, // Fondo de la tarjeta
                     margin: EdgeInsets.all(10),

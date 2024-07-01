@@ -67,7 +67,7 @@ class _ClientePageState extends State<ClientePage> {
         _clientesFiltrados = _clientes;
       } else {
         _clientesFiltrados = _clientes.where((cliente) {
-          return cliente['_id'].toString().contains(query);
+          return cliente['cedula'].toString().contains(query);
         }).toList();
       }
     });
@@ -272,7 +272,7 @@ class _ClientePageState extends State<ClientePage> {
                     controller: _searchController,
                     style: TextStyle(color: Colors.black), // Cambiar el color del texto a negro
                     decoration: InputDecoration(
-                      labelText: 'Buscar por ID',
+                      labelText: 'Buscar por cédula',
                       labelStyle: TextStyle(color: Colors.black),
                       filled: true,
                       fillColor: Colors.white, // Fondo del campo de búsqueda

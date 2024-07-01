@@ -11,6 +11,8 @@ class FacturaPage extends StatefulWidget {
 
 class _FacturaPageState extends State<FacturaPage> {
   List<dynamic> _facturas = [];
+  List<dynamic> _facturasFiltradas = [];
+  TextEditingController _searchController = TextEditingController();
 
   final Map<String, String> _metodoPagoMap = {
     '01': 'SIN UTILIZACION DEL SISTEMA FINANCIERO',
@@ -27,6 +29,14 @@ class _FacturaPageState extends State<FacturaPage> {
   void initState() {
     super.initState();
     _fetchFacturas();
+    _searchController.addListener(_onSearchChanged);
+  }
+
+  @override
+  void dispose() {
+    _searchController.removeListener(_onSearchChanged);
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<void> _fetchFacturas() async {
@@ -37,8 +47,22 @@ class _FacturaPageState extends State<FacturaPage> {
       List<dynamic> facturas = await ApiService.fetchFacturas(token);
       setState(() {
         _facturas = facturas;
+        _facturasFiltradas = facturas;
       });
     }
+  }
+
+  void _onSearchChanged() {
+    final query = _searchController.text.toLowerCase();
+    setState(() {
+      if (query.isEmpty) {
+        _facturasFiltradas = _facturas;
+      } else {
+        _facturasFiltradas = _facturas.where((factura) {
+          return factura['id_cliente'].toString().contains(query);
+        }).toList();
+      }
+    });
   }
 
   Future<void> _navegarAFormularioFactura() async {
@@ -68,6 +92,22 @@ class _FacturaPageState extends State<FacturaPage> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             SizedBox(height: 20),
+            TextField(
+              controller: _searchController,
+              style: TextStyle(color: Colors.black), // Cambiar el color del texto a negro
+              decoration: InputDecoration(
+                labelText: 'Buscar por ID Cliente',
+                labelStyle: TextStyle(color: Colors.black),
+                filled: true,
+                fillColor: Colors.white, // Fondo del campo de búsqueda
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10.0),
+                  borderSide: BorderSide.none,
+                ),
+                prefixIcon: Icon(Icons.search, color: Colors.black),
+              ),
+            ),
+            SizedBox(height: 20),
             ElevatedButton(
               onPressed: _navegarAFormularioFactura,
               style: ElevatedButton.styleFrom(
@@ -84,9 +124,9 @@ class _FacturaPageState extends State<FacturaPage> {
             SizedBox(height: 20),
             Expanded(
               child: ListView.builder(
-                itemCount: _facturas.length,
+                itemCount: _facturasFiltradas.length,
                 itemBuilder: (context, index) {
-                  var factura = _facturas[index];
+                  var factura = _facturasFiltradas[index];
                   return Card(
                     color: Colors.white, // Fondo de la tarjeta
                     margin: EdgeInsets.all(10),
