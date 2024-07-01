@@ -31,15 +31,16 @@ class _ProformaPageState extends State<ProformaPage> {
   }
 
   Future<void> _navegarAFormularioProforma() async {
-    final result = await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => FormularioProformaPage()),
-    );
+  final result = await Navigator.push(
+    context,
+    MaterialPageRoute(builder: (context) => FormularioProformaPage()),
+  );
 
-    if (result == true) {
-      _fetchProformas();
-    }
+  if (result == true) {
+    _fetchProformas(); // Recargar la lista de proformas
   }
+}
+
 
   @override
   Widget build(BuildContext context) {

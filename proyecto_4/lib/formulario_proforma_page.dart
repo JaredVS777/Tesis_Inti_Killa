@@ -216,50 +216,53 @@ class _FormularioProformaPageState extends State<FormularioProformaPage> {
   }
 
   Future<void> _guardarProforma() async {
-    if (_formKey.currentState?.validate() ?? false) {
-      _formKey.currentState?.save();
+  if (_formKey.currentState?.validate() ?? false) {
+    _formKey.currentState?.save();
 
-      if (_productos.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Debe agregar al menos un producto')),
+    if (_productos.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Debe agregar al menos un producto')),
+      );
+      return;
+    }
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('token');
+
+    if (token != null) {
+      try {
+        Map<String, dynamic> response = await ApiService.agregarProforma(
+          token: token,
+          idCliente: _idCliente,
+          idEmpleado: _idEmpleadoController.text,
+          productos: _productos,
+          totalSinImpuestos: _totalSinImpuestos,
+          totalDescuento: _totalDescuento,
+          totalImpuestoValor: _totalImpuestoValor,
+          importeTotal: _importeTotal,
         );
-        return;
-      }
 
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      String? token = prefs.getString('token');
-
-      if (token != null) {
-        try {
-          Map<String, dynamic> response = await ApiService.agregarProforma(
-            token: token,
-            idCliente: _idCliente,
-            idEmpleado: _idEmpleadoController.text,
-            productos: _productos,
-            totalSinImpuestos: _totalSinImpuestos,
-            totalDescuento: _totalDescuento,
-            totalImpuestoValor: _totalImpuestoValor,
-            importeTotal: _importeTotal,
-          );
-
-          if (response.containsKey('mensaje')) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(response['mensaje'])),
-            );
-          } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Error al guardar la proforma')),
-            );
-          }
-        } catch (e) {
-          print('Error al agregar la proforma: $e');
+        if (response.containsKey('mensaje')) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error al guardar la proforma')),
+            SnackBar(content: Text(response['mensaje'])),
           );
+          Navigator.pop(context, true); // Volver y recargar la lista de proformas
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Proforma guardada con éxito')),
+          );
+          Navigator.pop(context, true); // Indicar que se guardó correctamente y recargar la lista
         }
+      } catch (e) {
+        print('Error al agregar la proforma: $e');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al guardar la proforma')),
+        );
       }
     }
   }
+}
+
 
   @override
   Widget build(BuildContext context) {

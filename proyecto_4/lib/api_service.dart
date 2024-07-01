@@ -386,46 +386,47 @@ class ApiService {
     }
   }
 
-  static Future<Map<String, dynamic>> agregarProforma({
-    required String token,
-    required String idCliente,
-    required String idEmpleado,
-    required List<Map<String, dynamic>> productos,
-    required double totalSinImpuestos,
-    required double totalDescuento,
-    required double totalImpuestoValor,
-    required double importeTotal,
-  }) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/proforma/registro'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-        body: json.encode({
-          'id_cliente': idCliente,
-          'id_empleado': idEmpleado,
-          'products': productos,
-          'totalSinImpuestos': totalSinImpuestos,
-          'totalDescuento': totalDescuento,
-          'totalImpuestoValor': totalImpuestoValor,
-          'importeTotal': importeTotal,
-        }),
-      );
+ static Future<Map<String, dynamic>> agregarProforma({
+  required String token,
+  required String idCliente,
+  required String idEmpleado,
+  required List<Map<String, dynamic>> productos,
+  required double totalSinImpuestos,
+  required double totalDescuento,
+  required double totalImpuestoValor,
+  required double importeTotal,
+}) async {
+  try {
+    final response = await http.post(
+      Uri.parse('$baseUrl/proforma/registro'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: json.encode({
+        'id_cliente': idCliente,
+        'id_empleado': idEmpleado,
+        'products': productos,
+        'totalSinImpuestos': totalSinImpuestos,
+        'totalDescuento': totalDescuento,
+        'totalImpuestoValor': totalImpuestoValor,
+        'importeTotal': importeTotal,
+      }),
+    );
 
-      if (response.statusCode == 200) {
-        return json.decode(response.body);
-      } else {
-        print('Error al guardar la proforma: ${response.statusCode}');
-        print('Cuerpo de la respuesta: ${response.body}');
-        throw Exception('Error al guardar la proforma');
-      }
-    } catch (e) {
-      print('Error en la solicitud HTTP: $e');
-      throw e;
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return json.decode(response.body);
+    } else {
+      print('Error al guardar la proforma: ${response.statusCode}');
+      print('Cuerpo de la respuesta: ${response.body}');
+      throw Exception('Error al guardar la proforma');
     }
+  } catch (e) {
+    print('Error en la solicitud HTTP: $e');
+    throw e;
   }
+}
+
 
   static Future<bool> modificarProforma({
     required String token,
@@ -535,7 +536,5 @@ class ApiService {
       throw e;
     }
   }
-
-
 
 }
