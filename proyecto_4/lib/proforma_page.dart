@@ -41,7 +41,6 @@ class _ProformaPageState extends State<ProformaPage> {
   }
 }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(

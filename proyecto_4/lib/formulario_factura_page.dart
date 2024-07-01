@@ -54,11 +54,11 @@ class _FormularioFacturaPageState extends State<FormularioFacturaPage> {
 
   Future<void> _setEmpleadoId() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? idEmpleado = prefs.getString('_id');  // Usamos '_id' ya que es el identificador del empleado
+    String? idEmpleado = prefs.getString('_id');
 
     if (idEmpleado != null) {
       setState(() {
-        _idEmpleadoController.text = idEmpleado;  // Establecer el ID del empleado en el controlador del campo de texto
+        _idEmpleadoController.text = idEmpleado;
       });
     }
   }
@@ -70,14 +70,14 @@ class _FormularioFacturaPageState extends State<FormularioFacturaPage> {
     }
     setState(() {
       _totalSinImpuestos = total;
-      _actualizarTotales(); // Actualizamos los totales cuando cambia el total sin impuestos
+      _actualizarTotales();
     });
   }
 
   void _actualizarTotales() {
     setState(() {
       _totalDescuento = double.tryParse(_totalDescuentoController.text) ?? 0.0;
-      _totalImpuestoValor = _totalSinImpuestos * 0.15; // 15% de IVA
+      _totalImpuestoValor = _totalSinImpuestos * 0.15;
       _importeTotal = _totalSinImpuestos + _totalImpuestoValor - _totalDescuento;
     });
   }
@@ -95,17 +95,14 @@ class _FormularioFacturaPageState extends State<FormularioFacturaPage> {
           'precioUnitario': double.parse(_precioUnitarioController.text),
         });
 
-        // Limpiar campos
         _codigoController.clear();
         _nombreController.clear();
         _cantidadController.clear();
         _precioUnitarioController.clear();
 
-        // Calcular el total sin impuestos
         _calcularTotalSinImpuestos();
       });
 
-      // Mostrar el BottomSheet con la tabla de productos y los campos adicionales
       _mostrarBottomSheet();
     }
   }
@@ -144,8 +141,8 @@ class _FormularioFacturaPageState extends State<FormularioFacturaPage> {
                               setState(() {
                                 _productos.remove(producto);
                                 _calcularTotalSinImpuestos();
-                                Navigator.pop(context); // Cerrar el BottomSheet
-                                _mostrarBottomSheet(); // Volver a mostrar el BottomSheet actualizado
+                                Navigator.pop(context);
+                                _mostrarBottomSheet();
                               });
                             },
                           ),
@@ -190,7 +187,7 @@ class _FormularioFacturaPageState extends State<FormularioFacturaPage> {
                 SizedBox(height: 20),
                 ElevatedButton(
                   onPressed: () {
-                    Navigator.pop(context); // Cerrar el BottomSheet
+                    Navigator.pop(context);
                     _guardarFactura();
                   },
                   style: ElevatedButton.styleFrom(
@@ -210,52 +207,55 @@ class _FormularioFacturaPageState extends State<FormularioFacturaPage> {
     );
   }
 
-  Future<void> _guardarFactura() async {
-    if (_formKey.currentState?.validate() ?? false) {
-      _formKey.currentState?.save();
+ void _guardarFactura() async {
+  if (_formKey.currentState?.validate() ?? false) {
+    _formKey.currentState?.save();
 
-      if (_productos.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Debe agregar al menos un producto')),
+    if (_productos.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Debe agregar al menos un producto')),
+      );
+      return;
+    }
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('token');
+
+    if (token != null) {
+      try {
+        Map<String, dynamic> response = await ApiService.agregarFactura(
+          token: token,
+          idCliente: _idCliente,
+          idEmpleado: _idEmpleadoController.text,
+          productos: _productos,
+          totalSinImpuestos: _totalSinImpuestos,
+          totalDescuento: _totalDescuento,
+          totalImpuestoValor: _totalImpuestoValor,
+          importeTotal: _importeTotal,
+          metodoPago: _metodoPagoController.text,
+          pagoTotal: _importeTotal, // Usar el importe total como pago total
         );
-        return;
-      }
 
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      String? token = prefs.getString('token');
-
-      if (token != null) {
-        try {
-          Map<String, dynamic> response = await ApiService.agregarFactura(
-            token: token,
-            idCliente: _idCliente,
-            idEmpleado: _idEmpleadoController.text,
-            productos: _productos,
-            totalSinImpuestos: _totalSinImpuestos,
-            totalDescuento: _totalDescuento,
-            totalImpuestoValor: _totalImpuestoValor,
-            importeTotal: _importeTotal,
-            metodoPago: _metodoPagoController.text,
-          );
-
-          if (response.containsKey('mensaje')) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(response['mensaje'])),
-            );
-          } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Error al guardar la factura')),
-            );
-          }
-        } catch (e) {
-          print('Error al agregar la factura: $e');
+        if (response.containsKey('mensaje')) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error al guardar la factura')),
+            SnackBar(content: Text(response['mensaje'])),
           );
+          Navigator.pop(context, true); // Volver y recargar la lista de facturas
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Factura guardada con éxito')),
+          );
+          Navigator.pop(context, true); // Indicar que se guardó correctamente y recargar la lista
         }
+      } catch (e) {
+        print('Error al agregar la factura: $e');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al guardar la factura')),
+        );
       }
     }
   }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -311,7 +311,7 @@ class _FormularioFacturaPageState extends State<FormularioFacturaPage> {
                   type: TextInputType.text,
                   texto: 'ID Empleado',
                   controller: _idEmpleadoController,
-                  readOnly: true,  // Hacer que el campo no sea editable
+                  readOnly: true,
                 ),
                 _TextFieldCustom(
                   icono: Icons.code,
@@ -337,11 +337,66 @@ class _FormularioFacturaPageState extends State<FormularioFacturaPage> {
                   texto: 'Precio Unitario',
                   controller: _precioUnitarioController,
                 ),
-                _TextFieldCustom(
-                  icono: Icons.payment,
-                  type: TextInputType.text,
-                  texto: 'Método de Pago',
-                  controller: _metodoPagoController,
+                DropdownButtonFormField(
+                  value: _metodoPagoController.text.isNotEmpty ? _metodoPagoController.text : null,
+                  hint: Text('Seleccione Método de Pago', style: TextStyle(color: Colors.grey)),
+                  items: [
+                    DropdownMenuItem(
+                      child: Text('SIN UTILIZACION DEL SISTEMA FINANCIERO'),
+                      value: '01',
+                    ),
+                    DropdownMenuItem(
+                      child: Text('COMPENSACION DE DEUDAS'),
+                      value: '15',
+                    ),
+                    DropdownMenuItem(
+                      child: Text('TARJETA DE DEBITO'),
+                      value: '16',
+                    ),
+                    DropdownMenuItem(
+                      child: Text('DINERO ELECTRONICO'),
+                      value: '17',
+                    ),
+                    DropdownMenuItem(
+                      child: Text('TARJETA PREPAGO'),
+                      value: '18',
+                    ),
+                    DropdownMenuItem(
+                      child: Text('TARJETA DE CREDITO'),
+                      value: '19',
+                    ),
+                    DropdownMenuItem(
+                      child: Text('OTROS CON UTILIZACION DEL SISTEMA FINANCIERO'),
+                      value: '20',
+                    ),
+                    DropdownMenuItem(
+                      child: Text('ENDOSO DE TÍTULOS'),
+                      value: '21',
+                    ),
+                  ],
+                  onChanged: (value) {
+                    setState(() {
+                      _metodoPagoController.text = value as String;
+                    });
+                  },
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Por favor, seleccione un método de pago';
+                    }
+                    return null;
+                  },
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: Color(0xffEBDCFA),
+                    border: OutlineInputBorder(
+                      borderSide: BorderSide(color: Color(0xffEBDCFA)),
+                      borderRadius: BorderRadius.circular(50),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Color(0xffEBDCFA)),
+                      borderRadius: BorderRadius.circular(50),
+                    ),
+                  ),
                 ),
                 SizedBox(height: 20),
                 ElevatedButton(

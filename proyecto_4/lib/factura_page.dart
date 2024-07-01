@@ -12,6 +12,17 @@ class FacturaPage extends StatefulWidget {
 class _FacturaPageState extends State<FacturaPage> {
   List<dynamic> _facturas = [];
 
+  final Map<String, String> _metodoPagoMap = {
+    '01': 'SIN UTILIZACION DEL SISTEMA FINANCIERO',
+    '15': 'COMPENSACION DE DEUDAS',
+    '16': 'TARJETA DE DEBITO',
+    '17': 'DINERO ELECTRONICO',
+    '18': 'TARJETA PREPAGO',
+    '19': 'TARJETA DE CREDITO',
+    '20': 'OTROS CON UTILIZACION DEL SISTEMA FINANCIERO',
+    '21': 'ENDOSO DE TÍTULOS',
+  };
+
   @override
   void initState() {
     super.initState();
@@ -95,7 +106,7 @@ class _FacturaPageState extends State<FacturaPage> {
                           Text('Total Descuento: ${factura['totalDescuento']}', style: TextStyle(color: Colors.black)),
                           Text('Total Impuesto Valor: ${factura['totalImpuestoValor']}', style: TextStyle(color: Colors.black)),
                           Text('Importe Total: ${factura['importeTotal']}', style: TextStyle(color: Colors.black)),
-                          Text('Método de Pago: ${factura['formaPago']}', style: TextStyle(color: Colors.black)),
+                          Text('Método de Pago: ${_metodoPagoMap[factura['formaPago']] ?? 'Método no disponible'}', style: TextStyle(color: Colors.black)),
                         ],
                       ),
                     ),

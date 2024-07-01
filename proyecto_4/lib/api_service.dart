@@ -471,48 +471,51 @@ class ApiService {
   }
 
   // Facturas
-  static Future<Map<String, dynamic>> agregarFactura({
-    required String token,
-    required String idCliente,
-    required String idEmpleado,
-    required List<Map<String, dynamic>> productos,
-    required double totalSinImpuestos,
-    required double totalDescuento,
-    required double totalImpuestoValor,
-    required double importeTotal,
-    required String metodoPago,
-  }) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/factura/generate-invoice'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-        body: json.encode({
-          'id_cliente': idCliente,
-          'id_empleado': idEmpleado,
-          'products': productos,
-          'totalSinImpuestos': totalSinImpuestos,
-          'totalDescuento': totalDescuento,
-          'totalImpuestoValor': totalImpuestoValor,
-          'importeTotal': importeTotal,
-          'formaPago': metodoPago,
-        }),
-      );
+static Future<Map<String, dynamic>> agregarFactura({
+  required String token,
+  required String idCliente,
+  required String idEmpleado,
+  required List<Map<String, dynamic>> productos,
+  required double totalSinImpuestos,
+  required double totalDescuento,
+  required double totalImpuestoValor,
+  required double importeTotal,
+  required String metodoPago,
+  required double pagoTotal, // Asegúrate de enviar este campo
+}) async {
+  try {
+    final response = await http.post(
+      Uri.parse('$baseUrl/factura/generate-invoice'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: json.encode({
+        'id_cliente': idCliente,
+        'id_empleado': idEmpleado,
+        'products': productos,
+        'totalSinImpuestos': totalSinImpuestos,
+        'totalDescuento': totalDescuento,
+        'totalImpuestoValor': totalImpuestoValor,
+        'importeTotal': importeTotal,
+        'formaPago': metodoPago,
+        'pagoTotal': pagoTotal, // Asegúrate de enviar este campo
+      }),
+    );
 
-      if (response.statusCode == 200) {
-        return json.decode(response.body);
-      } else {
-        print('Error al guardar la factura: ${response.statusCode}');
-        print('Cuerpo de la respuesta: ${response.body}');
-        throw Exception('Error al guardar la factura');
-      }
-    } catch (e) {
-      print('Error en la solicitud HTTP: $e');
-      throw e;
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return json.decode(response.body);
+    } else {
+      print('Error al guardar la factura: ${response.statusCode}');
+      print('Cuerpo de la respuesta: ${response.body}');
+      throw Exception('Error al guardar la factura');
     }
+  } catch (e) {
+    print('Error en la solicitud HTTP: $e');
+    throw e;
   }
+}
+
 
   static Future<List<dynamic>> fetchFacturas(String token) async {
     try {
@@ -536,5 +539,7 @@ class ApiService {
       throw e;
     }
   }
+
+
 
 }
