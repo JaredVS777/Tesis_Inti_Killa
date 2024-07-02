@@ -146,23 +146,6 @@ class _TextFieldCustom extends StatelessWidget {
   }
 }
 
-class _Titulo extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(15.0),
-      child: Row(
-        children: [
-          Text(
-            'Recuperar Usuario',
-            style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold, color: Colors.white),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _LogoHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -179,11 +162,10 @@ class _LogoHeader extends StatelessWidget {
             BoxShadow(blurRadius: 10, color: Colors.black26),
           ],
         ),
-        child: Align(
-          alignment: Alignment.center,
-          child: Text(
-            'FRAVE',
-            style: TextStyle(fontSize: 21, fontWeight: FontWeight.bold, color: Color(0xff5511b0)),
+        child: ClipOval(
+          child: Image.asset(
+            'assets/images/logo.png',
+            fit: BoxFit.cover,
           ),
         ),
       ),
@@ -222,4 +204,21 @@ class _HeaderRecuperacionPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}
+
+class _Titulo extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(15.0),
+      child: Row(
+        children: [
+          Text(
+            'Recuperar Usuario',
+            style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold, color: Colors.white),
+          ),
+        ],
+      ),
+    );
+  }
 }

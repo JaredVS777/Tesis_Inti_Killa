@@ -265,11 +265,10 @@ class _LogoHeader extends StatelessWidget {
             BoxShadow(blurRadius: 10, color: Colors.black26),
           ],
         ),
-        child: Align(
-          alignment: Alignment.center,
-          child: Text(
-            'FRAVE',
-            style: TextStyle(fontSize: 21, fontWeight: FontWeight.bold, color: Color(0xff5511b0)),
+        child: ClipOval(
+          child: Image.asset(
+            'assets/images/logo.png',
+            fit: BoxFit.cover,
           ),
         ),
       ),
