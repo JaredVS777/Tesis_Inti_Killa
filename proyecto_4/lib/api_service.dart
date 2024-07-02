@@ -537,4 +537,55 @@ class ApiService {
       throw e;
     }
   }
+
+  // Funciones para enviar y autorizar facturas al SRI
+  static Future<bool> enviarSRI(String token, String claveAcceso) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/factura/recibir'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({'claveAcceso': claveAcceso}),
+      );
+
+      if (response.statusCode == 200) {
+        print('Factura enviada al SRI exitosamente.');
+        return true;
+      } else {
+        print('Error al enviar la factura al SRI: ${response.statusCode}');
+        print('Cuerpo de la respuesta: ${response.body}');
+        return false;
+      }
+    } catch (e) {
+      print('Error en la solicitud HTTP: $e');
+      return false;
+    }
+  }
+
+  static Future<bool> autorizarSRI(String token, String claveAcceso) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/factura/autorizacion'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({'claveAcceso': claveAcceso}),
+      );
+
+      if (response.statusCode == 200) {
+        print('Factura autorizada exitosamente.');
+        return true;
+      } else {
+        print('Error al autorizar la factura: ${response.statusCode}');
+        print('Cuerpo de la respuesta: ${response.body}');
+        return false;
+      }
+    } catch (e) {
+      print('Error en la solicitud HTTP: $e');
+      return false;
+    }
+  }
 }

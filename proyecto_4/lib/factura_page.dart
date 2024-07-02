@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'api_service.dart';
-import 'login_page.dart';
 import 'formulario_factura_page.dart';
+import 'login_page.dart';
 
 class FacturaPage extends StatefulWidget {
   @override
@@ -73,6 +73,42 @@ class _FacturaPageState extends State<FacturaPage> {
 
     if (result == true) {
       _fetchFacturas();
+    }
+  }
+
+  Future<void> _enviarSRI(String claveAcceso) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('token');
+
+    if (token != null) {
+      bool success = await ApiService.enviarSRI(token, claveAcceso);
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Factura enviada al SRI correctamente')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al enviar la factura al SRI')),
+        );
+      }
+    }
+  }
+
+  Future<void> _autorizarSRI(String claveAcceso) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('token');
+
+    if (token != null) {
+      bool success = await ApiService.autorizarSRI(token, claveAcceso);
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Factura autorizada correctamente')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al autorizar la factura')),
+        );
+      }
     }
   }
 
@@ -147,6 +183,33 @@ class _FacturaPageState extends State<FacturaPage> {
                           Text('Total Impuesto Valor: ${factura['totalImpuestoValor']}', style: TextStyle(color: Colors.black)),
                           Text('Importe Total: ${factura['importeTotal']}', style: TextStyle(color: Colors.black)),
                           Text('Método de Pago: ${_metodoPagoMap[factura['formaPago']] ?? 'Método no disponible'}', style: TextStyle(color: Colors.black)),
+                          SizedBox(height: 10),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              ElevatedButton(
+                                onPressed: () => _enviarSRI(factura['claveAcceso']),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.blue,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10.0),
+                                  ),
+                                ),
+                                child: Text('ENVIAR SRI', style: TextStyle(color: Colors.white)),
+                              ),
+                              SizedBox(width: 10),
+                              ElevatedButton(
+                                onPressed: () => _autorizarSRI(factura['claveAcceso']),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.green,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10.0),
+                                  ),
+                                ),
+                                child: Text('AUTORIZAR', style: TextStyle(color: Colors.white)),
+                              ),
+                            ],
+                          ),
                         ],
                       ),
                     ),
