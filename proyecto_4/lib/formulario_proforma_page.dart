@@ -28,6 +28,13 @@ class _FormularioProformaPageState extends State<FormularioProformaPage> {
   double _importeTotal = 0.0;
   List<dynamic> _clientes = [];
 
+  final Map<String, Map<String, dynamic>> _productosEstablecidos = {
+    '10': {'nombre': 'Extintor 10lb', 'precio': 30.68},
+    '5': {'nombre': 'Extintor 5lb', 'precio': 25.23},
+    '20': {'nombre': 'Extintor 20lb', 'precio': 35.46},
+    '30': {'nombre': 'Extintor 30lb', 'precio': 40.12},
+  };
+
   @override
   void initState() {
     super.initState();
@@ -37,13 +44,44 @@ class _FormularioProformaPageState extends State<FormularioProformaPage> {
       _cargarDatosProforma(widget.proforma!);
     }
     _totalDescuentoController.addListener(_actualizarTotales);
+    _codigoController.addListener(_actualizarProductoDesdeCodigo);
+    _nombreController.addListener(_actualizarProductoDesdeNombre);
   }
 
   @override
   void dispose() {
     _totalDescuentoController.removeListener(_actualizarTotales);
+    _codigoController.removeListener(_actualizarProductoDesdeCodigo);
+    _nombreController.removeListener(_actualizarProductoDesdeNombre);
     _totalDescuentoController.dispose();
+    _codigoController.dispose();
+    _nombreController.dispose();
     super.dispose();
+  }
+
+  void _actualizarProductoDesdeCodigo() {
+    final codigo = _codigoController.text;
+    if (_productosEstablecidos.containsKey(codigo)) {
+      setState(() {
+        _nombreController.text = _productosEstablecidos[codigo]!['nombre'];
+        _precioUnitarioController.text = _productosEstablecidos[codigo]!['precio'].toString();
+      });
+    }
+  }
+
+  void _actualizarProductoDesdeNombre() {
+    final nombre = _nombreController.text;
+    final codigoProducto = _productosEstablecidos.entries.firstWhere(
+      (element) => element.value['nombre'] == nombre,
+      orElse: () => MapEntry('', {'nombre': '', 'precio': 0.0}),
+    );
+
+    if (codigoProducto.key.isNotEmpty) {
+      setState(() {
+        _codigoController.text = codigoProducto.key;
+        _precioUnitarioController.text = codigoProducto.value['precio'].toString();
+      });
+    }
   }
 
   void _cargarDatosProforma(Map<String, dynamic> proforma) {
