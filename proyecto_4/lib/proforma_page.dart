@@ -54,15 +54,44 @@ class _ProformaPageState extends State<ProformaPage> {
     });
   }
 
-  Future<void> _navegarAFormularioProforma() async {
+  Future<void> _navegarAFormularioProforma({Map<String, dynamic>? proforma, int? index}) async {
     final result = await Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => FormularioProformaPage()),
+      MaterialPageRoute(
+        builder: (context) => FormularioProformaPage(proforma: proforma),
+      ),
     );
 
     if (result == true) {
       _fetchProformas();
     }
+  }
+
+  void _confirmarModificacionProforma(Map<String, dynamic> proforma, int index) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Confirmar Modificación'),
+          content: Text('¿Seguro quieres modificar la proforma?'),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('No'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _navegarAFormularioProforma(proforma: proforma, index: index);
+              },
+              child: Text('Sí'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -98,7 +127,9 @@ class _ProformaPageState extends State<ProformaPage> {
             ),
             SizedBox(height: 20),
             ElevatedButton(
-              onPressed: _navegarAFormularioProforma,
+              onPressed: () {
+                _navegarAFormularioProforma();
+              },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Color(0xff5511b0), // Color del botón
                 shape: RoundedRectangleBorder(
@@ -118,16 +149,14 @@ class _ProformaPageState extends State<ProformaPage> {
                   var proforma = _proformasFiltradas[index];
                   return Card(
                     color: Colors.white, // Fondo de la tarjeta
-                    margin: EdgeInsets.all(10),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10.0),
                     ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(15.0),
-                      child: Column(
+                    child: ListTile(
+                      title: Text('ID Cliente: ${proforma['id_cliente']}', style: TextStyle(color: Colors.black)), // Texto en negro
+                      subtitle: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('ID Cliente: ${proforma['id_cliente']}', style: TextStyle(color: Colors.black)),
                           Text('ID Empleado: ${proforma['id_empleado']}', style: TextStyle(color: Colors.black)),
                           Text('Productos:', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
                           ..._buildProductList(proforma['productos']),
@@ -136,6 +165,12 @@ class _ProformaPageState extends State<ProformaPage> {
                           Text('Total Impuesto Valor: ${proforma['totalImpuestoValor']}', style: TextStyle(color: Colors.black)),
                           Text('Importe Total: ${proforma['importeTotal']}', style: TextStyle(color: Colors.black)),
                         ],
+                      ),
+                      trailing: IconButton(
+                        icon: Icon(Icons.edit, color: Colors.black),
+                        onPressed: () {
+                          _confirmarModificacionProforma(proforma, index);
+                        },
                       ),
                     ),
                   );

@@ -81,7 +81,7 @@ class ApiService {
     }
   }
 
- static Future<Map<String, dynamic>> agregarCliente({
+  static Future<Map<String, dynamic>> agregarCliente({
     required String token,
     required Map<String, dynamic> cliente,
   }) async {
@@ -109,7 +109,6 @@ class ApiService {
       throw e;
     }
   }
-
 
   static Future<bool> guardarCliente({
     required String token,
@@ -386,7 +385,7 @@ class ApiService {
     }
   }
 
- static Future<Map<String, dynamic>> agregarProforma({
+  static Future<bool> agregarProforma({
   required String token,
   required String idCliente,
   required String idEmpleado,
@@ -415,7 +414,7 @@ class ApiService {
     );
 
     if (response.statusCode == 200 || response.statusCode == 201) {
-      return json.decode(response.body);
+      return true;
     } else {
       print('Error al guardar la proforma: ${response.statusCode}');
       print('Cuerpo de la respuesta: ${response.body}');
@@ -429,8 +428,50 @@ class ApiService {
 
 
   static Future<bool> modificarProforma({
+  required String token,
+  required String idProforma,
+  required String idCliente,
+  required String idEmpleado,
+  required List<Map<String, dynamic>> productos,
+  required double totalSinImpuestos,
+  required double totalDescuento,
+  required double totalImpuestoValor,
+  required double importeTotal,
+}) async {
+  try {
+    final response = await http.put(
+      Uri.parse('$baseUrl/proforma/actualizar/$idProforma'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: json.encode({
+        'id_cliente': idCliente,
+        'id_empleado': idEmpleado,
+        'productos': productos,
+        'totalSinImpuestos': totalSinImpuestos,
+        'totalDescuento': totalDescuento,
+        'totalImpuestoValor': totalImpuestoValor,
+        'importeTotal': importeTotal,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      return true;
+    } else {
+      print('Error al actualizar la proforma: ${response.statusCode}');
+      print('Cuerpo de la respuesta: ${response.body}');
+      throw Exception('Error al actualizar la proforma');
+    }
+  } catch (e) {
+    print('Error en la solicitud HTTP: $e');
+    throw e;
+  }
+}
+
+  // Facturas
+  static Future<Map<String, dynamic>> agregarFactura({
     required String token,
-    required String idProforma,
     required String idCliente,
     required String idEmpleado,
     required List<Map<String, dynamic>> productos,
@@ -438,10 +479,12 @@ class ApiService {
     required double totalDescuento,
     required double totalImpuestoValor,
     required double importeTotal,
+    required String metodoPago,
+    required double pagoTotal, // Asegúrate de enviar este campo
   }) async {
     try {
-      final response = await http.put(
-        Uri.parse('$baseUrl/proforma/actualizar/$idProforma'),
+      final response = await http.post(
+        Uri.parse('$baseUrl/factura/generate-invoice'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
@@ -454,68 +497,23 @@ class ApiService {
           'totalDescuento': totalDescuento,
           'totalImpuestoValor': totalImpuestoValor,
           'importeTotal': importeTotal,
+          'formaPago': metodoPago,
+          'pagoTotal': pagoTotal, // Asegúrate de enviar este campo
         }),
       );
 
-      if (response.statusCode == 200) {
-        return true;
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return json.decode(response.body);
       } else {
-        print('Error al actualizar la proforma: ${response.statusCode}');
+        print('Error al guardar la factura: ${response.statusCode}');
         print('Cuerpo de la respuesta: ${response.body}');
-        throw Exception('Error al actualizar la proforma');
+        throw Exception('Error al guardar la factura');
       }
     } catch (e) {
       print('Error en la solicitud HTTP: $e');
       throw e;
     }
   }
-
-  // Facturas
-static Future<Map<String, dynamic>> agregarFactura({
-  required String token,
-  required String idCliente,
-  required String idEmpleado,
-  required List<Map<String, dynamic>> productos,
-  required double totalSinImpuestos,
-  required double totalDescuento,
-  required double totalImpuestoValor,
-  required double importeTotal,
-  required String metodoPago,
-  required double pagoTotal, // Asegúrate de enviar este campo
-}) async {
-  try {
-    final response = await http.post(
-      Uri.parse('$baseUrl/factura/generate-invoice'),
-      headers: {
-        'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json',
-      },
-      body: json.encode({
-        'id_cliente': idCliente,
-        'id_empleado': idEmpleado,
-        'products': productos,
-        'totalSinImpuestos': totalSinImpuestos,
-        'totalDescuento': totalDescuento,
-        'totalImpuestoValor': totalImpuestoValor,
-        'importeTotal': importeTotal,
-        'formaPago': metodoPago,
-        'pagoTotal': pagoTotal, // Asegúrate de enviar este campo
-      }),
-    );
-
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      return json.decode(response.body);
-    } else {
-      print('Error al guardar la factura: ${response.statusCode}');
-      print('Cuerpo de la respuesta: ${response.body}');
-      throw Exception('Error al guardar la factura');
-    }
-  } catch (e) {
-    print('Error en la solicitud HTTP: $e');
-    throw e;
-  }
-}
-
 
   static Future<List<dynamic>> fetchFacturas(String token) async {
     try {
@@ -539,7 +537,4 @@ static Future<Map<String, dynamic>> agregarFactura({
       throw e;
     }
   }
-
-
-
 }

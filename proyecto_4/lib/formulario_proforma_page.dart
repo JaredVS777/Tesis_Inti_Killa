@@ -3,6 +3,10 @@ import 'api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class FormularioProformaPage extends StatefulWidget {
+  final Map<String, dynamic>? proforma;
+
+  FormularioProformaPage({this.proforma});
+
   @override
   _FormularioProformaPageState createState() => _FormularioProformaPageState();
 }
@@ -29,6 +33,9 @@ class _FormularioProformaPageState extends State<FormularioProformaPage> {
     super.initState();
     _fetchClientes();
     _setEmpleadoId();
+    if (widget.proforma != null) {
+      _cargarDatosProforma(widget.proforma!);
+    }
     _totalDescuentoController.addListener(_actualizarTotales);
   }
 
@@ -37,6 +44,17 @@ class _FormularioProformaPageState extends State<FormularioProformaPage> {
     _totalDescuentoController.removeListener(_actualizarTotales);
     _totalDescuentoController.dispose();
     super.dispose();
+  }
+
+  void _cargarDatosProforma(Map<String, dynamic> proforma) {
+    _idCliente = proforma['id_cliente'];
+    _idEmpleadoController.text = proforma['id_empleado'];
+    _productos = List<Map<String, dynamic>>.from(proforma['productos']);
+    _totalSinImpuestos = proforma['totalSinImpuestos'];
+    _totalDescuento = proforma['totalDescuento'];
+    _totalImpuestoValor = proforma['totalImpuestoValor'];
+    _importeTotal = proforma['importeTotal'];
+    _actualizarTotales();
   }
 
   Future<void> _fetchClientes() async {
@@ -216,53 +234,66 @@ class _FormularioProformaPageState extends State<FormularioProformaPage> {
   }
 
   Future<void> _guardarProforma() async {
-  if (_formKey.currentState?.validate() ?? false) {
-    _formKey.currentState?.save();
+    if (_formKey.currentState?.validate() ?? false) {
+      _formKey.currentState?.save();
 
-    if (_productos.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Debe agregar al menos un producto')),
-      );
-      return;
-    }
-
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? token = prefs.getString('token');
-
-    if (token != null) {
-      try {
-        Map<String, dynamic> response = await ApiService.agregarProforma(
-          token: token,
-          idCliente: _idCliente,
-          idEmpleado: _idEmpleadoController.text,
-          productos: _productos,
-          totalSinImpuestos: _totalSinImpuestos,
-          totalDescuento: _totalDescuento,
-          totalImpuestoValor: _totalImpuestoValor,
-          importeTotal: _importeTotal,
-        );
-
-        if (response.containsKey('mensaje')) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(response['mensaje'])),
-          );
-          Navigator.pop(context, true); // Volver y recargar la lista de proformas
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Proforma guardada con éxito')),
-          );
-          Navigator.pop(context, true); // Indicar que se guardó correctamente y recargar la lista
-        }
-      } catch (e) {
-        print('Error al agregar la proforma: $e');
+      if (_productos.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al guardar la proforma')),
+          SnackBar(content: Text('Debe agregar al menos un producto')),
         );
+        return;
+      }
+
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? token = prefs.getString('token');
+
+      if (token != null) {
+        try {
+          bool success;
+          if (widget.proforma == null) {
+            success = await ApiService.agregarProforma(
+              token: token,
+              idCliente: _idCliente,
+              idEmpleado: _idEmpleadoController.text,
+              productos: _productos,
+              totalSinImpuestos: _totalSinImpuestos,
+              totalDescuento: _totalDescuento,
+              totalImpuestoValor: _totalImpuestoValor,
+              importeTotal: _importeTotal,
+            );
+          } else {
+            success = await ApiService.modificarProforma(
+              token: token,
+              idProforma: widget.proforma!['_id'],
+              idCliente: _idCliente,
+              idEmpleado: _idEmpleadoController.text,
+              productos: _productos,
+              totalSinImpuestos: _totalSinImpuestos,
+              totalDescuento: _totalDescuento,
+              totalImpuestoValor: _totalImpuestoValor,
+              importeTotal: _importeTotal,
+            );
+          }
+
+          if (success) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Proforma guardada con éxito')),
+            );
+            Navigator.pop(context, true); // Indicar que se guardó correctamente y recargar la lista
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Error al guardar la proforma')),
+            );
+          }
+        } catch (e) {
+          print('Error al agregar la proforma: $e');
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error al guardar la proforma')),
+          );
+        }
       }
     }
   }
-}
-
 
   @override
   Widget build(BuildContext context) {
