@@ -25,19 +25,57 @@ class _FormularioFacturaPageState extends State<FormularioFacturaPage> {
   double _importeTotal = 0.0;
   List<dynamic> _clientes = [];
 
+  final Map<String, Map<String, dynamic>> _productosEstablecidos = {
+    '10': {'nombre': 'Extintor 10lb', 'precio': 30.68},
+    '5': {'nombre': 'Extintor 5lb', 'precio': 25.23},
+    '20': {'nombre': 'Extintor 20lb', 'precio': 35.46},
+    '30': {'nombre': 'Extintor 30lb', 'precio': 40.12},
+  };
+
   @override
   void initState() {
     super.initState();
     _fetchClientes();
     _setEmpleadoId();
     _totalDescuentoController.addListener(_actualizarTotales);
+    _codigoController.addListener(_actualizarProductoDesdeCodigo);
+    _nombreController.addListener(_actualizarProductoDesdeNombre);
   }
 
   @override
   void dispose() {
     _totalDescuentoController.removeListener(_actualizarTotales);
+    _codigoController.removeListener(_actualizarProductoDesdeCodigo);
+    _nombreController.removeListener(_actualizarProductoDesdeNombre);
     _totalDescuentoController.dispose();
+    _codigoController.dispose();
+    _nombreController.dispose();
     super.dispose();
+  }
+
+  void _actualizarProductoDesdeCodigo() {
+    final codigo = _codigoController.text;
+    if (_productosEstablecidos.containsKey(codigo)) {
+      setState(() {
+        _nombreController.text = _productosEstablecidos[codigo]!['nombre'];
+        _precioUnitarioController.text = _productosEstablecidos[codigo]!['precio'].toString();
+      });
+    }
+  }
+
+  void _actualizarProductoDesdeNombre() {
+    final nombre = _nombreController.text;
+    final codigoProducto = _productosEstablecidos.entries.firstWhere(
+      (element) => element.value['nombre'] == nombre,
+      orElse: () => MapEntry('', {'nombre': '', 'precio': 0.0}),
+    );
+
+    if (codigoProducto.key.isNotEmpty) {
+      setState(() {
+        _codigoController.text = codigoProducto.key;
+        _precioUnitarioController.text = codigoProducto.value['precio'].toString();
+      });
+    }
   }
 
   Future<void> _fetchClientes() async {
@@ -207,55 +245,55 @@ class _FormularioFacturaPageState extends State<FormularioFacturaPage> {
     );
   }
 
- void _guardarFactura() async {
-  if (_formKey.currentState?.validate() ?? false) {
-    _formKey.currentState?.save();
+  void _guardarFactura() async {
+    if (_formKey.currentState?.validate() ?? false) {
+      _formKey.currentState?.save();
 
-    if (_productos.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Debe agregar al menos un producto')),
-      );
-      return;
-    }
-
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? token = prefs.getString('token');
-
-    if (token != null) {
-      try {
-        Map<String, dynamic> response = await ApiService.agregarFactura(
-          token: token,
-          idCliente: _idCliente,
-          idEmpleado: _idEmpleadoController.text,
-          productos: _productos,
-          totalSinImpuestos: _totalSinImpuestos,
-          totalDescuento: _totalDescuento,
-          totalImpuestoValor: _totalImpuestoValor,
-          importeTotal: _importeTotal,
-          metodoPago: _metodoPagoController.text,
-          pagoTotal: _importeTotal, // Usar el importe total como pago total
-        );
-
-        if (response.containsKey('mensaje')) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(response['mensaje'])),
-          );
-          Navigator.pop(context, true); // Volver y recargar la lista de facturas
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Factura guardada con éxito')),
-          );
-          Navigator.pop(context, true); // Indicar que se guardó correctamente y recargar la lista
-        }
-      } catch (e) {
-        print('Error al agregar la factura: $e');
+      if (_productos.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al guardar la factura')),
+          SnackBar(content: Text('Debe agregar al menos un producto')),
         );
+        return;
+      }
+
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? token = prefs.getString('token');
+
+      if (token != null) {
+        try {
+          Map<String, dynamic> response = await ApiService.agregarFactura(
+            token: token,
+            idCliente: _idCliente,
+            idEmpleado: _idEmpleadoController.text,
+            productos: _productos,
+            totalSinImpuestos: _totalSinImpuestos,
+            totalDescuento: _totalDescuento,
+            totalImpuestoValor: _totalImpuestoValor,
+            importeTotal: _importeTotal,
+            metodoPago: _metodoPagoController.text,
+            pagoTotal: _importeTotal,
+          );
+
+          if (response.containsKey('mensaje')) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(response['mensaje'])),
+            );
+            Navigator.pop(context, true);
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Factura guardada con éxito')),
+            );
+            Navigator.pop(context, true);
+          }
+        } catch (e) {
+          print('Error al agregar la factura: $e');
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error al guardar la factura')),
+          );
+        }
       }
     }
   }
-}
 
   @override
   Widget build(BuildContext context) {
