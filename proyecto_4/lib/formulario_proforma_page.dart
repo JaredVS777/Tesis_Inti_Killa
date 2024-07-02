@@ -26,7 +26,7 @@ class _FormularioProformaPageState extends State<FormularioProformaPage> {
   double _totalDescuento = 0.0;
   double _totalImpuestoValor = 0.0;
   double _importeTotal = 0.0;
-  List<dynamic> _clientes = [];
+  List<Map<String, dynamic>> _clientes = [];
 
   final Map<String, Map<String, dynamic>> _productosEstablecidos = {
     '10': {'nombre': 'Extintor 10lb', 'precio': 30.68},
@@ -102,18 +102,23 @@ class _FormularioProformaPageState extends State<FormularioProformaPage> {
     if (token != null) {
       List<dynamic> clientes = await ApiService.fetchClientes(token);
       setState(() {
-        _clientes = clientes;
+        _clientes = clientes.map((cliente) {
+          return {
+            'id': cliente['_id'],
+            'cedula': cliente['cedula'],
+          };
+        }).toList();
       });
     }
   }
 
   Future<void> _setEmpleadoId() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? idEmpleado = prefs.getString('_id');  // Usamos '_id' ya que es el identificador del empleado
+    String? idEmpleado = prefs.getString('_id'); // Usamos '_id' ya que es el identificador del empleado
 
     if (idEmpleado != null) {
       setState(() {
-        _idEmpleadoController.text = idEmpleado;  // Establecer el ID del empleado en el controlador del campo de texto
+        _idEmpleadoController.text = idEmpleado; // Establecer el ID del empleado en el controlador del campo de texto
       });
     }
   }
@@ -349,9 +354,9 @@ class _FormularioProformaPageState extends State<FormularioProformaPage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
-                DropdownButtonFormField(
+                DropdownButtonFormField<String>(
                   decoration: InputDecoration(
-                    labelText: 'ID Cliente',
+                    labelText: 'Cédula del Cliente',
                     filled: true,
                     fillColor: Color(0xffEBDCFA),
                     border: OutlineInputBorder(
@@ -364,15 +369,15 @@ class _FormularioProformaPageState extends State<FormularioProformaPage> {
                     ),
                   ),
                   value: _idCliente.isNotEmpty ? _idCliente : null,
-                  items: _clientes.map<DropdownMenuItem<String>>((cliente) {
+                  items: _clientes.map((cliente) {
                     return DropdownMenuItem<String>(
-                      value: cliente['_id'],
-                      child: Text(cliente['_id'], style: TextStyle(color: Colors.black)),
+                      value: cliente['id'] ?? '', // Asegurarse de que value no sea null
+                      child: Text(cliente['cedula'] ?? '', style: TextStyle(color: Colors.black)), // Asegurarse de que el texto no sea null
                     );
                   }).toList(),
                   onChanged: (value) {
                     setState(() {
-                      _idCliente = value as String;
+                      _idCliente = value!;
                     });
                   },
                   validator: (value) {

@@ -23,7 +23,7 @@ class _FormularioFacturaPageState extends State<FormularioFacturaPage> {
   double _totalDescuento = 0.0;
   double _totalImpuestoValor = 0.0;
   double _importeTotal = 0.0;
-  List<dynamic> _clientes = [];
+  List<Map<String, dynamic>> _clientes = [];
 
   final Map<String, Map<String, dynamic>> _productosEstablecidos = {
     '10': {'nombre': 'Extintor 10lb', 'precio': 30.68},
@@ -85,7 +85,12 @@ class _FormularioFacturaPageState extends State<FormularioFacturaPage> {
     if (token != null) {
       List<dynamic> clientes = await ApiService.fetchClientes(token);
       setState(() {
-        _clientes = clientes;
+        _clientes = clientes.map((cliente) {
+          return {
+            'id': cliente['_id'],
+            'cedula': cliente['cedula'],
+          };
+        }).toList();
       });
     }
   }
@@ -313,11 +318,11 @@ class _FormularioFacturaPageState extends State<FormularioFacturaPage> {
               children: <Widget>[
                 DropdownButtonFormField(
                   value: _idCliente.isNotEmpty ? _idCliente : null,
-                  hint: Text('Seleccione ID Cliente', style: TextStyle(color: Colors.grey)),
+                  hint: Text('Seleccione cédula del Cliente', style: TextStyle(color: Colors.grey)),
                   items: _clientes.map<DropdownMenuItem<String>>((cliente) {
                     return DropdownMenuItem<String>(
-                      value: cliente['_id'],
-                      child: Text(cliente['_id'], style: TextStyle(color: Colors.black)),
+                      value: cliente['id'],
+                      child: Text(cliente['cedula'], style: TextStyle(color: Colors.black)),
                     );
                   }).toList(),
                   onChanged: (value) {

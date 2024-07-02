@@ -12,12 +12,14 @@ class ProformaPage extends StatefulWidget {
 class _ProformaPageState extends State<ProformaPage> {
   List<dynamic> _proformas = [];
   List<dynamic> _proformasFiltradas = [];
+  List<Map<String, dynamic>> _clientes = [];
   TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _fetchProformas();
+    _fetchClientes();
     _searchController.addListener(_onSearchChanged);
   }
 
@@ -41,6 +43,23 @@ class _ProformaPageState extends State<ProformaPage> {
     }
   }
 
+  Future<void> _fetchClientes() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('token');
+
+    if (token != null) {
+      List<dynamic> clientes = await ApiService.fetchClientes(token);
+      setState(() {
+        _clientes = clientes.map((cliente) {
+          return {
+            'id': cliente['_id'],
+            'cedula': cliente['cedula'],
+          };
+        }).toList();
+      });
+    }
+  }
+
   void _onSearchChanged() {
     final query = _searchController.text.toLowerCase();
     setState(() {
@@ -48,7 +67,8 @@ class _ProformaPageState extends State<ProformaPage> {
         _proformasFiltradas = _proformas;
       } else {
         _proformasFiltradas = _proformas.where((proforma) {
-          return proforma['id_cliente'].toString().contains(query);
+          final cliente = _clientes.firstWhere((cliente) => cliente['id'] == proforma['id_cliente'], orElse: () => {'cedula': ''});
+          return cliente['cedula'].toString().contains(query);
         }).toList();
       }
     });
@@ -94,6 +114,11 @@ class _ProformaPageState extends State<ProformaPage> {
     );
   }
 
+  String _getCedulaCliente(String idCliente) {
+    final cliente = _clientes.firstWhere((cliente) => cliente['id'] == idCliente, orElse: () => {'cedula': 'N/A'});
+    return cliente['cedula'];
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -114,7 +139,7 @@ class _ProformaPageState extends State<ProformaPage> {
               controller: _searchController,
               style: TextStyle(color: Colors.black), // Cambiar el color del texto a negro
               decoration: InputDecoration(
-                labelText: 'Buscar por ID Cliente',
+                labelText: 'Buscar por cédula del Cliente',
                 labelStyle: TextStyle(color: Colors.black),
                 filled: true,
                 fillColor: Colors.white, // Fondo del campo de búsqueda
@@ -153,7 +178,7 @@ class _ProformaPageState extends State<ProformaPage> {
                       borderRadius: BorderRadius.circular(10.0),
                     ),
                     child: ListTile(
-                      title: Text('ID Cliente: ${proforma['id_cliente']}', style: TextStyle(color: Colors.black)), // Texto en negro
+                      title: Text('Cédula Cliente: ${_getCedulaCliente(proforma['id_cliente'])}', style: TextStyle(color: Colors.black)), // Texto en negro
                       subtitle: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [

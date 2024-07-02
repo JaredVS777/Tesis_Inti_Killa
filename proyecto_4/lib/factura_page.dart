@@ -12,6 +12,7 @@ class FacturaPage extends StatefulWidget {
 class _FacturaPageState extends State<FacturaPage> {
   List<dynamic> _facturas = [];
   List<dynamic> _facturasFiltradas = [];
+  List<Map<String, dynamic>> _clientes = [];
   TextEditingController _searchController = TextEditingController();
 
   final Map<String, String> _metodoPagoMap = {
@@ -29,6 +30,7 @@ class _FacturaPageState extends State<FacturaPage> {
   void initState() {
     super.initState();
     _fetchFacturas();
+    _fetchClientes();
     _searchController.addListener(_onSearchChanged);
   }
 
@@ -52,6 +54,23 @@ class _FacturaPageState extends State<FacturaPage> {
     }
   }
 
+  Future<void> _fetchClientes() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('token');
+
+    if (token != null) {
+      List<dynamic> clientes = await ApiService.fetchClientes(token);
+      setState(() {
+        _clientes = clientes.map((cliente) {
+          return {
+            'id': cliente['_id'],
+            'cedula': cliente['cedula'],
+          };
+        }).toList();
+      });
+    }
+  }
+
   void _onSearchChanged() {
     final query = _searchController.text.toLowerCase();
     setState(() {
@@ -59,7 +78,8 @@ class _FacturaPageState extends State<FacturaPage> {
         _facturasFiltradas = _facturas;
       } else {
         _facturasFiltradas = _facturas.where((factura) {
-          return factura['id_cliente'].toString().contains(query);
+          final cliente = _clientes.firstWhere((cliente) => cliente['id'] == factura['id_cliente'], orElse: () => {'cedula': ''});
+          return cliente['cedula'].toString().contains(query);
         }).toList();
       }
     });
@@ -112,6 +132,11 @@ class _FacturaPageState extends State<FacturaPage> {
     }
   }
 
+  String _getCedulaCliente(String idCliente) {
+    final cliente = _clientes.firstWhere((cliente) => cliente['id'] == idCliente, orElse: () => {'cedula': 'N/A'});
+    return cliente['cedula'];
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -132,7 +157,7 @@ class _FacturaPageState extends State<FacturaPage> {
               controller: _searchController,
               style: TextStyle(color: Colors.black), // Cambiar el color del texto a negro
               decoration: InputDecoration(
-                labelText: 'Buscar por ID Cliente',
+                labelText: 'Buscar por cédula del Cliente',
                 labelStyle: TextStyle(color: Colors.black),
                 filled: true,
                 fillColor: Colors.white, // Fondo del campo de búsqueda
@@ -174,7 +199,7 @@ class _FacturaPageState extends State<FacturaPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('ID Cliente: ${factura['id_cliente']}', style: TextStyle(color: Colors.black)),
+                          Text('Cédula Cliente: ${_getCedulaCliente(factura['id_cliente'])}', style: TextStyle(color: Colors.black)),
                           Text('ID Empleado: ${factura['id_empleado']}', style: TextStyle(color: Colors.black)),
                           Text('Productos:', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
                           ..._buildProductList(factura['productos']),
