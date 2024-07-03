@@ -188,62 +188,134 @@ class _FacturaPageState extends State<FacturaPage> {
                 itemCount: _facturasFiltradas.length,
                 itemBuilder: (context, index) {
                   var factura = _facturasFiltradas[index];
-                  return Card(
-                    color: Colors.white, // Fondo de la tarjeta
-                    margin: EdgeInsets.all(10),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10.0),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(15.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Cédula Cliente: ${_getCedulaCliente(factura['id_cliente'])}', style: TextStyle(color: Colors.black)),
-                          Text('ID Empleado: ${factura['id_empleado']}', style: TextStyle(color: Colors.black)),
-                          Text('Productos:', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-                          ..._buildProductList(factura['productos']),
-                          Text('Total sin Impuestos: ${factura['totalSinImpuestos']}', style: TextStyle(color: Colors.black)),
-                          Text('Total Descuento: ${factura['totalDescuento']}', style: TextStyle(color: Colors.black)),
-                          Text('Total Impuesto Valor: ${factura['totalImpuestoValor']}', style: TextStyle(color: Colors.black)),
-                          Text('Importe Total: ${factura['importeTotal']}', style: TextStyle(color: Colors.black)),
-                          Text('Método de Pago: ${_metodoPagoMap[factura['formaPago']] ?? 'Método no disponible'}', style: TextStyle(color: Colors.black)),
-                          SizedBox(height: 10),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              ElevatedButton(
-                                onPressed: () => _enviarSRI(factura['claveAcceso']),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.blue,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10.0),
-                                  ),
-                                ),
-                                child: Text('ENVIAR SRI', style: TextStyle(color: Colors.white)),
-                              ),
-                              SizedBox(width: 10),
-                              ElevatedButton(
-                                onPressed: () => _autorizarSRI(factura['claveAcceso']),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.green,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10.0),
-                                  ),
-                                ),
-                                child: Text('AUTORIZAR', style: TextStyle(color: Colors.white)),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
+                  return _buildFacturaCard(
+                    factura['id_cliente'],
+                    factura['id_empleado'],
+                    factura['productos'],
+                    factura['totalSinImpuestos'].toString(),
+                    factura['totalDescuento'].toString(),
+                    factura['totalImpuestoValor'].toString(),
+                    factura['importeTotal'].toString(),
+                    _metodoPagoMap[factura['formaPago']] ?? 'Método no disponible',
+                    factura['claveAcceso'],
                   );
                 },
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildFacturaCard(
+    String idCliente,
+    String idEmpleado,
+    List<dynamic> productos,
+    String totalSinImpuestos,
+    String totalDescuento,
+    String totalImpuestoValor,
+    String importeTotal,
+    String formaPago,
+    String claveAcceso,
+  ) {
+    bool isExpanded = false;
+    return StatefulBuilder(
+      builder: (BuildContext context, StateSetter setState) {
+        return Card(
+          elevation: 5,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+          shadowColor: Colors.black54,
+          margin: EdgeInsets.all(10),
+          child: Padding(
+            padding: EdgeInsets.all(15),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Cédula Cliente: ${_getCedulaCliente(idCliente)}',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
+                ),
+                SizedBox(height: 10),
+                _buildInfoRow('ID Empleado', idEmpleado),
+                if (isExpanded) ...[
+                  Text(
+                    'Productos:',
+                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
+                  ),
+                  ..._buildProductList(productos),
+                  _buildInfoRow('Total sin Impuestos', totalSinImpuestos),
+                  _buildInfoRow('Total Descuento', totalDescuento),
+                  _buildInfoRow('Total Impuesto Valor', totalImpuestoValor),
+                  _buildInfoRow('Importe Total', importeTotal),
+                  _buildInfoRow('Método de Pago', formaPago),
+                ],
+                TextButton(
+                  onPressed: () {
+                    setState(() {
+                      isExpanded = !isExpanded;
+                    });
+                  },
+                  child: Text(isExpanded ? 'Ver menos...' : 'Ver más...'),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    IconButton(
+                      icon: Icon(Icons.picture_as_pdf, color: Colors.red),
+                      onPressed: () {
+                        // Acción para generar o ver PDF
+                      },
+                    ),
+                    ElevatedButton(
+                      onPressed: () => _enviarSRI(claveAcceso),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10.0),
+                        ),
+                      ),
+                      child: Text('ENVIAR SRI', style: TextStyle(color: Colors.white)),
+                    ),
+                    SizedBox(width: 10),
+                    ElevatedButton(
+                      onPressed: () => _autorizarSRI(claveAcceso),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10.0),
+                        ),
+                      ),
+                      child: Text('AUTORIZAR', style: TextStyle(color: Colors.white)),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildInfoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Row(
+        children: [
+          Text(
+            '$label: ',
+            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black54),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: TextStyle(color: Colors.black87),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -255,10 +327,10 @@ class _FacturaPageState extends State<FacturaPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Código: ${producto['codigo']}', style: TextStyle(color: Colors.black)),
-            Text('Nombre: ${producto['nombre']}', style: TextStyle(color: Colors.black)),
-            Text('Cantidad: ${producto['cantidad']}', style: TextStyle(color: Colors.black)),
-            Text('Precio Unitario: ${producto['precioUnitario']}', style: TextStyle(color: Colors.black)),
+            _buildInfoRow('Código', producto['codigo']),
+            _buildInfoRow('Nombre', producto['nombre']),
+            _buildInfoRow('Cantidad', producto['cantidad'].toString()),
+            _buildInfoRow('Precio Unitario', producto['precioUnitario'].toString()),
           ],
         ),
       );

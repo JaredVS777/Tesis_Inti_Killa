@@ -402,36 +402,71 @@ class _ClientePageState extends State<ClientePage> {
     );
   }
 
-  Widget _buildClienteCard(String id, String nombre, String cedula, String telefono, String direccion, String email, String tipodoc, int index) {
+Widget _buildClienteCard(String id, String nombre, String cedula, String telefono, String direccion, String email, String tipodoc, int index) {
     final tipoDoc = _tipoDocMap[tipodoc] ?? 'Tipo de identificación no disponible';
     return Card(
-      color: Colors.white, // Fondo de la tarjeta
+      elevation: 5,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10.0),
+        borderRadius: BorderRadius.circular(15),
       ),
-      child: ListTile(
-        title: Text(nombre, style: TextStyle(color: Colors.black)), // Texto en negro
-        subtitle: Text(
-          'ID: $id\nCédula: $cedula\nTeléfono: $telefono\nDirección: $direccion\nEmail: $email\nTipo de Identificación: $tipoDoc',
-          style: TextStyle(color: Colors.black), // Texto en negro más claro
-        ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
+      shadowColor: Colors.black54,
+      margin: EdgeInsets.all(10),
+      child: Padding(
+        padding: EdgeInsets.all(15),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            IconButton(
-              icon: Icon(Icons.edit, color: Colors.black),
-              onPressed: () {
-                _confirmarModificacionCliente(_clientesFiltrados[index], index);
-              },
+            Text(
+              nombre,
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
             ),
-            IconButton(
-              icon: Icon(Icons.delete, color: Colors.black),
-              onPressed: () {
-                _confirmarEliminacionCliente(index);
-              },
+            SizedBox(height: 10),
+            _buildInfoRow('ID', id),
+            _buildInfoRow('Cédula', cedula),
+            _buildInfoRow('Teléfono', telefono),
+            _buildInfoRow('Dirección', direccion),
+            _buildInfoRow('Email', email),
+            _buildInfoRow('Tipo de Identificación', tipoDoc),
+            SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                IconButton(
+                  icon: Icon(Icons.edit, color: Colors.blue),
+                  onPressed: () {
+                    _confirmarModificacionCliente(_clientesFiltrados[index], index);
+                  },
+                ),
+                IconButton(
+                  icon: Icon(Icons.delete, color: Colors.red),
+                  onPressed: () {
+                    _confirmarEliminacionCliente(index);
+                  },
+                ),
+              ],
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Row(
+        children: [
+          Text(
+            '$label: ',
+            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black54),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: TextStyle(color: Colors.black87),
+            ),
+          ),
+        ],
       ),
     );
   }

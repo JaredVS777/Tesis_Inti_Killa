@@ -172,38 +172,116 @@ class _ProformaPageState extends State<ProformaPage> {
                 itemCount: _proformasFiltradas.length,
                 itemBuilder: (context, index) {
                   var proforma = _proformasFiltradas[index];
-                  return Card(
-                    color: Colors.white, // Fondo de la tarjeta
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10.0),
-                    ),
-                    child: ListTile(
-                      title: Text('Cédula Cliente: ${_getCedulaCliente(proforma['id_cliente'])}', style: TextStyle(color: Colors.black)), // Texto en negro
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('ID Empleado: ${proforma['id_empleado']}', style: TextStyle(color: Colors.black)),
-                          Text('Productos:', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-                          ..._buildProductList(proforma['productos']),
-                          Text('Total sin Impuestos: ${proforma['totalSinImpuestos']}', style: TextStyle(color: Colors.black)),
-                          Text('Total Descuento: ${proforma['totalDescuento']}', style: TextStyle(color: Colors.black)),
-                          Text('Total Impuesto Valor: ${proforma['totalImpuestoValor']}', style: TextStyle(color: Colors.black)),
-                          Text('Importe Total: ${proforma['importeTotal']}', style: TextStyle(color: Colors.black)),
-                        ],
-                      ),
-                      trailing: IconButton(
-                        icon: Icon(Icons.edit, color: Colors.black),
-                        onPressed: () {
-                          _confirmarModificacionProforma(proforma, index);
-                        },
-                      ),
-                    ),
+                  return _buildProformaCard(
+                    proforma['id_cliente'],
+                    proforma['id_empleado'],
+                    proforma['productos'],
+                    proforma['totalSinImpuestos'].toString(),
+                    proforma['totalDescuento'].toString(),
+                    proforma['totalImpuestoValor'].toString(),
+                    proforma['importeTotal'].toString(),
+                    index,
                   );
                 },
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildProformaCard(
+    String idCliente,
+    String idEmpleado,
+    List<dynamic> productos,
+    String totalSinImpuestos,
+    String totalDescuento,
+    String totalImpuestoValor,
+    String importeTotal,
+    int index,
+  ) {
+    bool isExpanded = false;
+    return StatefulBuilder(
+      builder: (BuildContext context, StateSetter setState) {
+        return Card(
+          elevation: 5,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+          shadowColor: Colors.black54,
+          margin: EdgeInsets.all(10),
+          child: Padding(
+            padding: EdgeInsets.all(15),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Cédula Cliente: ${_getCedulaCliente(idCliente)}',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
+                ),
+                SizedBox(height: 10),
+                _buildInfoRow('ID Empleado', idEmpleado),
+                if (isExpanded) ...[
+                  Text(
+                    'Productos:',
+                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
+                  ),
+                  ..._buildProductList(productos),
+                  _buildInfoRow('Total sin Impuestos', totalSinImpuestos),
+                  _buildInfoRow('Total Descuento', totalDescuento),
+                  _buildInfoRow('Total Impuesto Valor', totalImpuestoValor),
+                  _buildInfoRow('Importe Total', importeTotal),
+                ],
+                TextButton(
+                  onPressed: () {
+                    setState(() {
+                      isExpanded = !isExpanded;
+                    });
+                  },
+                  child: Text(isExpanded ? 'Ver menos...' : 'Ver más...'),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    IconButton(
+                      icon: Icon(Icons.edit, color: Colors.blue),
+                      onPressed: () {
+                        _confirmarModificacionProforma(_proformasFiltradas[index], index);
+                      },
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.picture_as_pdf, color: Colors.red),
+                      onPressed: () {
+                        // Acción para generar o ver PDF
+                      },
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildInfoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Row(
+        children: [
+          Text(
+            '$label: ',
+            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black54),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: TextStyle(color: Colors.black87),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -215,10 +293,10 @@ class _ProformaPageState extends State<ProformaPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Código: ${producto['codigo']}', style: TextStyle(color: Colors.black)),
-            Text('Nombre: ${producto['nombre']}', style: TextStyle(color: Colors.black)),
-            Text('Cantidad: ${producto['cantidad']}', style: TextStyle(color: Colors.black)),
-            Text('Precio Unitario: ${producto['precioUnitario']}', style: TextStyle(color: Colors.black)),
+            _buildInfoRow('Código', producto['codigo']),
+            _buildInfoRow('Nombre', producto['nombre']),
+            _buildInfoRow('Cantidad', producto['cantidad'].toString()),
+            _buildInfoRow('Precio Unitario', producto['precioUnitario'].toString()),
           ],
         ),
       );
