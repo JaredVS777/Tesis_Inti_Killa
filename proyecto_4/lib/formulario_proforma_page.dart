@@ -88,10 +88,10 @@ class _FormularioProformaPageState extends State<FormularioProformaPage> {
     _idCliente = proforma['id_cliente'];
     _idEmpleadoController.text = proforma['id_empleado'];
     _productos = List<Map<String, dynamic>>.from(proforma['productos']);
-    _totalSinImpuestos = proforma['totalSinImpuestos'];
-    _totalDescuento = proforma['totalDescuento'];
-    _totalImpuestoValor = proforma['totalImpuestoValor'];
-    _importeTotal = proforma['importeTotal'];
+    _totalSinImpuestos = proforma['totalSinImpuestos']?.toDouble() ?? 0.0;
+    _totalDescuento = proforma['totalDescuento']?.toDouble() ?? 0.0;
+    _totalImpuestoValor = proforma['totalImpuestoValor']?.toDouble() ?? 0.0;
+    _importeTotal = proforma['importeTotal']?.toDouble() ?? 0.0;
     _actualizarTotales();
   }
 

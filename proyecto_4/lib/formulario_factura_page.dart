@@ -32,6 +32,17 @@ class _FormularioFacturaPageState extends State<FormularioFacturaPage> {
     '30': {'nombre': 'Extintor 30lb', 'precio': 40.12},
   };
 
+  final Map<String, String> _metodoPagoMap = {
+    '01': 'SIN SISTEMA FINANCIERO',
+    '15': 'COMPENSACION DE DEUDAS',
+    '16': 'TARJETA DE DEBITO',
+    '17': 'DINERO ELECTRONICO',
+    '18': 'TARJETA PREPAGO',
+    '19': 'TARJETA DE CREDITO',
+    '20': 'OTRO SISTEMA FINANCIERO',
+    '21': 'ENDOSO DE TÍTULOS',
+  };
+
   @override
   void initState() {
     super.initState();
@@ -322,7 +333,7 @@ class _FormularioFacturaPageState extends State<FormularioFacturaPage> {
                   items: _clientes.map<DropdownMenuItem<String>>((cliente) {
                     return DropdownMenuItem<String>(
                       value: cliente['id'],
-                      child: Text(cliente['cedula'], style: TextStyle(color: Colors.black)),
+                      child: Text(cliente['cedula'], style: TextStyle(color: Colors.black, fontSize: 14)),
                     );
                   }).toList(),
                   onChanged: (value) {
@@ -382,41 +393,13 @@ class _FormularioFacturaPageState extends State<FormularioFacturaPage> {
                 ),
                 DropdownButtonFormField(
                   value: _metodoPagoController.text.isNotEmpty ? _metodoPagoController.text : null,
-                  hint: Text('Seleccione Método de Pago', style: TextStyle(color: Colors.grey)),
-                  items: [
-                    DropdownMenuItem(
-                      child: Text('SIN UTILIZACION DEL SISTEMA FINANCIERO'),
-                      value: '01',
-                    ),
-                    DropdownMenuItem(
-                      child: Text('COMPENSACION DE DEUDAS'),
-                      value: '15',
-                    ),
-                    DropdownMenuItem(
-                      child: Text('TARJETA DE DEBITO'),
-                      value: '16',
-                    ),
-                    DropdownMenuItem(
-                      child: Text('DINERO ELECTRONICO'),
-                      value: '17',
-                    ),
-                    DropdownMenuItem(
-                      child: Text('TARJETA PREPAGO'),
-                      value: '18',
-                    ),
-                    DropdownMenuItem(
-                      child: Text('TARJETA DE CREDITO'),
-                      value: '19',
-                    ),
-                    DropdownMenuItem(
-                      child: Text('OTROS CON UTILIZACION DEL SISTEMA FINANCIERO'),
-                      value: '20',
-                    ),
-                    DropdownMenuItem(
-                      child: Text('ENDOSO DE TÍTULOS'),
-                      value: '21',
-                    ),
-                  ],
+                  hint: Text('Seleccione Método de Pago', style: TextStyle(color: Colors.grey, fontSize: 14)),
+                  items: _metodoPagoMap.entries.map<DropdownMenuItem<String>>((entry) {
+                    return DropdownMenuItem<String>(
+                      value: entry.key,
+                      child: Text(entry.value, style: TextStyle(fontSize: 14)),
+                    );
+                  }).toList(),
                   onChanged: (value) {
                     setState(() {
                       _metodoPagoController.text = value as String;
