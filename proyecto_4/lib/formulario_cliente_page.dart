@@ -36,6 +36,11 @@ class _FormularioClientePageState extends State<FormularioClientePage> {
   };
 
   String? _selectedTipoDoc;
+  String? _nombreError;
+  String? _cedulaError;
+  String? _telefonoError;
+  String? _direccionError;
+  String? _emailError;
 
   @override
   void initState() {
@@ -49,6 +54,12 @@ class _FormularioClientePageState extends State<FormularioClientePage> {
     if (widget.cliente?['tipodoc'] != null && _tipoDocMap.containsValue(widget.cliente!['tipodoc'])) {
       _selectedTipoDoc = _tipoDocMap.entries.firstWhere((element) => element.value == widget.cliente!['tipodoc']).key;
     }
+
+    _nombreController.addListener(_validateNombre);
+    _cedulaController.addListener(_validateCedula);
+    _telefonoController.addListener(_validateTelefono);
+    _direccionController.addListener(_validateDireccion);
+    _emailController.addListener(_validateEmail);
   }
 
   @override
@@ -61,8 +72,111 @@ class _FormularioClientePageState extends State<FormularioClientePage> {
     super.dispose();
   }
 
+  void _validateNombre() {
+    final nombre = _nombreController.text.trim();
+    if (nombre.isEmpty) {
+      setState(() {
+        _nombreError = 'El campo "nombre" no puede estar vacío';
+      });
+    } else if (nombre.length < 6 || nombre.length > 30) {
+      setState(() {
+        _nombreError = 'El campo "nombre" debe tener entre 6 y 30 caracteres';
+      });
+    } else if (!RegExp(r'^[a-zA-ZáéíóúÁÉÍÓÚñÑ ]+$').hasMatch(nombre)) {
+      setState(() {
+        _nombreError = 'El campo "nombre" debe contener solo letras';
+      });
+    } else {
+      setState(() {
+        _nombreError = null;
+      });
+    }
+  }
+
+  void _validateCedula() {
+    final cedula = _cedulaController.text.trim();
+    if (cedula.isEmpty) {
+      setState(() {
+        _cedulaError = 'El campo "cédula" no puede estar vacío';
+      });
+    } else if (cedula.length < 10 || cedula.length > 13) {
+      setState(() {
+        _cedulaError = 'El campo "cédula" debe tener entre 10 y 13 caracteres';
+      });
+    } else if (!RegExp(r'^[0-9]+$').hasMatch(cedula)) {
+      setState(() {
+        _cedulaError = 'El campo "cédula" debe contener solo números';
+      });
+    } else {
+      setState(() {
+        _cedulaError = null;
+      });
+    }
+  }
+
+  void _validateTelefono() {
+    final telefono = _telefonoController.text.trim();
+    if (telefono.isEmpty) {
+      setState(() {
+        _telefonoError = 'El campo "teléfono" no puede estar vacío';
+      });
+    } else if (telefono.length < 7 || telefono.length > 10) {
+      setState(() {
+        _telefonoError = 'El campo "teléfono" debe tener entre 7 y 10 caracteres';
+      });
+    } else if (!RegExp(r'^[0-9]+$').hasMatch(telefono)) {
+      setState(() {
+        _telefonoError = 'El campo "teléfono" debe contener solo números';
+      });
+    } else {
+      setState(() {
+        _telefonoError = null;
+      });
+    }
+  }
+
+  void _validateDireccion() {
+    final direccion = _direccionController.text.trim();
+    if (direccion.isEmpty) {
+      setState(() {
+        _direccionError = 'El campo "dirección" no puede estar vacío';
+      });
+    } else if (direccion.length > 60) {
+      setState(() {
+        _direccionError = 'El campo "dirección" debe tener como máximo 60 caracteres';
+      });
+    } else {
+      setState(() {
+        _direccionError = null;
+      });
+    }
+  }
+
+  void _validateEmail() {
+    final email = _emailController.text.trim();
+    if (email.isEmpty) {
+      setState(() {
+        _emailError = 'El campo "email" no puede estar vacío';
+      });
+    } else if (!RegExp(r'^[^@]+@[^@]+\.[^@]+$').hasMatch(email)) {
+      setState(() {
+        _emailError = 'El campo "email" debe ser un correo válido';
+      });
+    } else {
+      setState(() {
+        _emailError = null;
+      });
+    }
+  }
+
   Future<void> _guardarCliente() async {
-    if (_formKey.currentState!.validate()) {
+    _validateNombre();
+    _validateCedula();
+    _validateTelefono();
+    _validateDireccion();
+    _validateEmail();
+
+    if (_formKey.currentState!.validate() && _nombreError == null && _cedulaError == null && _telefonoError == null && _direccionError == null && _emailError == null) {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String? token = prefs.getString('token');
       if (token == null) {
@@ -74,11 +188,11 @@ class _FormularioClientePageState extends State<FormularioClientePage> {
         if (widget.cliente == null) {
           success = await ApiService.guardarCliente(
             token: token,
-            nombre: _nombreController.text,
-            cedula: _cedulaController.text,
-            telefono: _telefonoController.text,
-            direccion: _direccionController.text,
-            email: _emailController.text,
+            nombre: _nombreController.text.trim(),
+            cedula: _cedulaController.text.trim(),
+            telefono: _telefonoController.text.trim(),
+            direccion: _direccionController.text.trim(),
+            email: _emailController.text.trim(),
             tipodoc: _tipoDocMap[_selectedTipoDoc]!,
           );
         } else {
@@ -89,11 +203,11 @@ class _FormularioClientePageState extends State<FormularioClientePage> {
           success = await ApiService.modificarCliente(
             token: token,
             id: clienteId,
-            nombre: _nombreController.text,
-            cedula: _cedulaController.text,
-            telefono: _telefonoController.text,
-            direccion: _direccionController.text,
-            email: _emailController.text,
+            nombre: _nombreController.text.trim(),
+            cedula: _cedulaController.text.trim(),
+            telefono: _telefonoController.text.trim(),
+            direccion: _direccionController.text.trim(),
+            email: _emailController.text.trim(),
             tipodoc: _tipoDocMap[_selectedTipoDoc]!,
           );
         }
@@ -101,11 +215,11 @@ class _FormularioClientePageState extends State<FormularioClientePage> {
         if (success) {
           final clienteModificado = {
             '_id': widget.cliente?['_id'],
-            'nombre': _nombreController.text,
-            'cedula': _cedulaController.text,
-            'telefono': _telefonoController.text,
-            'direccion': _direccionController.text,
-            'email': _emailController.text,
+            'nombre': _nombreController.text.trim(),
+            'cedula': _cedulaController.text.trim(),
+            'telefono': _telefonoController.text.trim(),
+            'direccion': _direccionController.text.trim(),
+            'email': _emailController.text.trim(),
             'tipodoc': _tipoDocMap[_selectedTipoDoc],
           };
 
@@ -131,8 +245,13 @@ class _FormularioClientePageState extends State<FormularioClientePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.cliente != null ? 'Modificar Cliente' : 'Nuevo Cliente'),
+        title: Text(
+          widget.cliente != null ? 'Modificar Cliente' : 'Nuevo Cliente',
+          style: TextStyle(color: Colors.white),
+        ),
         backgroundColor: Color(0xff5511b0),
+        centerTitle: true,
+        iconTheme: IconThemeData(color: Colors.white), // Cambia la flecha a blanco
       ),
       backgroundColor: Color(0xFF0A192F),
       body: SingleChildScrollView(
@@ -143,36 +262,53 @@ class _FormularioClientePageState extends State<FormularioClientePage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
+                Icon(Icons.person_outline, size: 100, color: Color(0xffEBDCFA)), // Ícono de cliente
+                SizedBox(height: 20),
                 _TextFieldCustom(
                   icono: Icons.person_outline,
                   type: TextInputType.text,
-                  texto: 'Nombre',
+                  texto: 'Nombre y Apellido',
                   controller: _nombreController,
+                  errorText: _nombreError,
+                  maxLength: 30,
                 ),
+                SizedBox(height: 20),
                 _TextFieldCustom(
                   icono: Icons.credit_card,
                   type: TextInputType.number,
                   texto: 'Cédula',
                   controller: _cedulaController,
+                  errorText: _cedulaError,
+                  maxLength: 13,
                 ),
+                SizedBox(height: 20),
                 _TextFieldCustom(
                   icono: Icons.phone,
                   type: TextInputType.phone,
                   texto: 'Teléfono',
                   controller: _telefonoController,
+                  errorText: _telefonoError,
+                  maxLength: 10,
                 ),
+                SizedBox(height: 20),
                 _TextFieldCustom(
                   icono: Icons.location_on,
                   type: TextInputType.text,
                   texto: 'Dirección',
                   controller: _direccionController,
+                  errorText: _direccionError,
+                  maxLength: 60,
+                  showCounter: true,
                 ),
+                SizedBox(height: 20),
                 _TextFieldCustom(
                   icono: Icons.email,
                   type: TextInputType.emailAddress,
                   texto: 'Email',
                   controller: _emailController,
+                  errorText: _emailError,
                 ),
+                SizedBox(height: 20), // Añadir espacio antes del dropdown
                 DropdownButtonFormField<String>(
                   value: _selectedTipoDoc,
                   hint: Text('Seleccione tipo de identificación', style: TextStyle(color: Colors.grey)),
@@ -232,6 +368,9 @@ class _TextFieldCustom extends StatelessWidget {
   final TextInputType type;
   final String texto;
   final TextEditingController controller;
+  final String? errorText;
+  final int? maxLength;
+  final bool showCounter;
 
   const _TextFieldCustom({
     Key? key,
@@ -239,29 +378,62 @@ class _TextFieldCustom extends StatelessWidget {
     required this.type,
     required this.texto,
     required this.controller,
+    this.errorText,
+    this.maxLength,
+    this.showCounter = false,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10.0),
-      child: TextField(
-        controller: controller,
-        keyboardType: type,
-        decoration: InputDecoration(
-          hintText: texto,
-          filled: true,
-          fillColor: Color(0xffEBDCFA),
-          prefixIcon: Icon(icono, color: Colors.grey),
-          border: OutlineInputBorder(
-            borderSide: BorderSide(color: Color(0xffEBDCFA)),
-            borderRadius: BorderRadius.circular(50),
+      child: Stack(
+        children: [
+          TextField(
+            controller: controller,
+            keyboardType: type,
+            maxLength: maxLength,
+            decoration: InputDecoration(
+              hintText: texto,
+              filled: true,
+              fillColor: Color(0xffEBDCFA),
+              prefixIcon: Icon(icono, color: Colors.grey),
+              border: OutlineInputBorder(
+                borderSide: BorderSide(color: Color(0xffEBDCFA)),
+                borderRadius: BorderRadius.circular(50),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: Color(0xffEBDCFA)),
+                borderRadius: BorderRadius.circular(50),
+              ),
+              errorText: errorText,
+              counterText: '',
+            ),
+            onChanged: (value) {
+              if (maxLength != null && value.length > maxLength!) {
+                controller.text = value.substring(0, maxLength!);
+                controller.selection = TextSelection.fromPosition(
+                  TextPosition(offset: maxLength!),
+                );
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  content: Text('Se permite hasta $maxLength caracteres en el campo $texto'),
+                ));
+              }
+            },
           ),
-          enabledBorder: OutlineInputBorder(
-            borderSide: BorderSide(color: Color(0xffEBDCFA)),
-            borderRadius: BorderRadius.circular(50),
-          ),
-        ),
+          if (showCounter)
+            Positioned(
+              right: 16,
+              bottom: 0,
+              child: Padding(
+                padding: const EdgeInsets.only(right: 16.0),
+                child: Text(
+                  '${controller.text.length}/${maxLength ?? ''}',
+                  style: TextStyle(color: Colors.grey),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

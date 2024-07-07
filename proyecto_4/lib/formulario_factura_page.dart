@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_typeahead/flutter_typeahead.dart';
 
 class FormularioFacturaPage extends StatefulWidget {
   @override
@@ -10,14 +11,15 @@ class FormularioFacturaPage extends StatefulWidget {
 class _FormularioFacturaPageState extends State<FormularioFacturaPage> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _codigoController = TextEditingController();
-  final TextEditingController _nombreController = TextEditingController();
   final TextEditingController _cantidadController = TextEditingController();
   final TextEditingController _precioUnitarioController = TextEditingController();
   final TextEditingController _totalDescuentoController = TextEditingController();
   final TextEditingController _metodoPagoController = TextEditingController();
-  final TextEditingController _idEmpleadoController = TextEditingController();
+  final TextEditingController _clienteController = TextEditingController();
 
   String _idCliente = '';
+  String _idEmpleado = '';
+  String _nombreCompletoEmpleado = '';
   List<Map<String, dynamic>> _productos = [];
   double _totalSinImpuestos = 0.0;
   double _totalDescuento = 0.0;
@@ -47,20 +49,18 @@ class _FormularioFacturaPageState extends State<FormularioFacturaPage> {
   void initState() {
     super.initState();
     _fetchClientes();
-    _setEmpleadoId();
+    _setEmpleadoInfo();
     _totalDescuentoController.addListener(_actualizarTotales);
     _codigoController.addListener(_actualizarProductoDesdeCodigo);
-    _nombreController.addListener(_actualizarProductoDesdeNombre);
   }
 
   @override
   void dispose() {
     _totalDescuentoController.removeListener(_actualizarTotales);
     _codigoController.removeListener(_actualizarProductoDesdeCodigo);
-    _nombreController.removeListener(_actualizarProductoDesdeNombre);
     _totalDescuentoController.dispose();
     _codigoController.dispose();
-    _nombreController.dispose();
+    _clienteController.dispose();
     super.dispose();
   }
 
@@ -68,23 +68,8 @@ class _FormularioFacturaPageState extends State<FormularioFacturaPage> {
     final codigo = _codigoController.text;
     if (_productosEstablecidos.containsKey(codigo)) {
       setState(() {
-        _nombreController.text = _productosEstablecidos[codigo]!['nombre'];
+        _nombreProductoSeleccionado = _productosEstablecidos[codigo]!['nombre'];
         _precioUnitarioController.text = _productosEstablecidos[codigo]!['precio'].toString();
-      });
-    }
-  }
-
-  void _actualizarProductoDesdeNombre() {
-    final nombre = _nombreController.text;
-    final codigoProducto = _productosEstablecidos.entries.firstWhere(
-      (element) => element.value['nombre'] == nombre,
-      orElse: () => MapEntry('', {'nombre': '', 'precio': 0.0}),
-    );
-
-    if (codigoProducto.key.isNotEmpty) {
-      setState(() {
-        _codigoController.text = codigoProducto.key;
-        _precioUnitarioController.text = codigoProducto.value['precio'].toString();
       });
     }
   }
@@ -99,6 +84,7 @@ class _FormularioFacturaPageState extends State<FormularioFacturaPage> {
         _clientes = clientes.map((cliente) {
           return {
             'id': cliente['_id'],
+            'nombre': cliente['nombre'],
             'cedula': cliente['cedula'],
           };
         }).toList();
@@ -106,13 +92,16 @@ class _FormularioFacturaPageState extends State<FormularioFacturaPage> {
     }
   }
 
-  Future<void> _setEmpleadoId() async {
+  Future<void> _setEmpleadoInfo() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? idEmpleado = prefs.getString('_id');
+    String? nombreEmpleado = prefs.getString('nombre');
+    String? apellidoEmpleado = prefs.getString('apellido');
 
-    if (idEmpleado != null) {
+    if (idEmpleado != null && nombreEmpleado != null && apellidoEmpleado != null) {
       setState(() {
-        _idEmpleadoController.text = idEmpleado;
+        _idEmpleado = idEmpleado;
+        _nombreCompletoEmpleado = '$nombreEmpleado $apellidoEmpleado';
       });
     }
   }
@@ -138,19 +127,18 @@ class _FormularioFacturaPageState extends State<FormularioFacturaPage> {
 
   void _agregarProducto() {
     if (_codigoController.text.isNotEmpty &&
-        _nombreController.text.isNotEmpty &&
+        _nombreProductoSeleccionado.isNotEmpty &&
         _cantidadController.text.isNotEmpty &&
         _precioUnitarioController.text.isNotEmpty) {
       setState(() {
         _productos.add({
           'codigo': _codigoController.text,
-          'nombre': _nombreController.text,
+          'nombre': _nombreProductoSeleccionado,
           'cantidad': int.parse(_cantidadController.text),
           'precioUnitario': double.parse(_precioUnitarioController.text),
         });
 
         _codigoController.clear();
-        _nombreController.clear();
         _cantidadController.clear();
         _precioUnitarioController.clear();
 
@@ -242,16 +230,15 @@ class _FormularioFacturaPageState extends State<FormularioFacturaPage> {
                 ElevatedButton(
                   onPressed: () {
                     Navigator.pop(context);
-                    _guardarFactura();
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xff5511b0),
+                    backgroundColor: Colors.grey,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(50),
                     ),
                     padding: EdgeInsets.symmetric(horizontal: 50, vertical: 15),
                   ),
-                  child: Text('Guardar Factura', style: TextStyle(color: Colors.white, fontSize: 18)),
+                  child: Text('Regresar', style: TextStyle(color: Colors.white, fontSize: 18)),
                 ),
               ],
             ),
@@ -261,7 +248,7 @@ class _FormularioFacturaPageState extends State<FormularioFacturaPage> {
     );
   }
 
-  void _guardarFactura() async {
+  Future<void> _guardarFactura() async {
     if (_formKey.currentState?.validate() ?? false) {
       _formKey.currentState?.save();
 
@@ -280,7 +267,7 @@ class _FormularioFacturaPageState extends State<FormularioFacturaPage> {
           Map<String, dynamic> response = await ApiService.agregarFactura(
             token: token,
             idCliente: _idCliente,
-            idEmpleado: _idEmpleadoController.text,
+            idEmpleado: _idEmpleado,
             productos: _productos,
             totalSinImpuestos: _totalSinImpuestos,
             totalDescuento: _totalDescuento,
@@ -311,6 +298,8 @@ class _FormularioFacturaPageState extends State<FormularioFacturaPage> {
     }
   }
 
+  String _nombreProductoSeleccionado = '';
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -327,18 +316,36 @@ class _FormularioFacturaPageState extends State<FormularioFacturaPage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
-                DropdownButtonFormField(
-                  value: _idCliente.isNotEmpty ? _idCliente : null,
-                  hint: Text('Seleccione cédula del Cliente', style: TextStyle(color: Colors.grey)),
-                  items: _clientes.map<DropdownMenuItem<String>>((cliente) {
-                    return DropdownMenuItem<String>(
-                      value: cliente['id'],
-                      child: Text(cliente['cedula'], style: TextStyle(color: Colors.black, fontSize: 14)),
+                TypeAheadFormField(
+                  textFieldConfiguration: TextFieldConfiguration(
+                    controller: _clienteController,
+                    decoration: InputDecoration(
+                      labelText: 'Nombre del Cliente',
+                      filled: true,
+                      fillColor: Color(0xffEBDCFA),
+                      border: OutlineInputBorder(
+                        borderSide: BorderSide(color: Color(0xffEBDCFA)),
+                        borderRadius: BorderRadius.circular(50),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Color(0xffEBDCFA)),
+                        borderRadius: BorderRadius.circular(50),
+                      ),
+                    ),
+                  ),
+                  suggestionsCallback: (pattern) {
+                    return _clientes.where((cliente) =>
+                        cliente['nombre'].toLowerCase().contains(pattern.toLowerCase()));
+                  },
+                  itemBuilder: (context, suggestion) {
+                    return ListTile(
+                      title: Text(suggestion['nombre']),
                     );
-                  }).toList(),
-                  onChanged: (value) {
+                  },
+                  onSuggestionSelected: (suggestion) {
                     setState(() {
-                      _idCliente = value as String;
+                      _clienteController.text = suggestion['nombre'];
+                      _idCliente = suggestion['id'];
                     });
                   },
                   validator: (value) {
@@ -347,7 +354,29 @@ class _FormularioFacturaPageState extends State<FormularioFacturaPage> {
                     }
                     return null;
                   },
+                  onSaved: (value) {
+                    final cliente = _clientes.firstWhere((cliente) => cliente['nombre'] == value, orElse: () => {'id': ''});
+                    _idCliente = cliente['id'];
+                  },
+                ),
+                SizedBox(height: 20),
+                _TextFieldCustom(
+                  icono: Icons.person_outline,
+                  type: TextInputType.text,
+                  texto: 'Nombre del Empleado',
+                  controller: TextEditingController(text: _nombreCompletoEmpleado),
+                  readOnly: true,
+                ),
+                _TextFieldCustom(
+                  icono: Icons.code,
+                  type: TextInputType.text,
+                  texto: 'Código del Producto',
+                  controller: _codigoController,
+                ),
+                DropdownButtonFormField<String>(
+                  value: _nombreProductoSeleccionado.isEmpty ? null : _nombreProductoSeleccionado,
                   decoration: InputDecoration(
+                    labelText: 'Nombre del Producto',
                     filled: true,
                     fillColor: Color(0xffEBDCFA),
                     border: OutlineInputBorder(
@@ -359,25 +388,31 @@ class _FormularioFacturaPageState extends State<FormularioFacturaPage> {
                       borderRadius: BorderRadius.circular(50),
                     ),
                   ),
-                ),
-                _TextFieldCustom(
-                  icono: Icons.badge,
-                  type: TextInputType.text,
-                  texto: 'ID Empleado',
-                  controller: _idEmpleadoController,
-                  readOnly: true,
-                ),
-                _TextFieldCustom(
-                  icono: Icons.code,
-                  type: TextInputType.text,
-                  texto: 'Código del Producto',
-                  controller: _codigoController,
-                ),
-                _TextFieldCustom(
-                  icono: Icons.label,
-                  type: TextInputType.text,
-                  texto: 'Nombre del Producto',
-                  controller: _nombreController,
+                  items: _productosEstablecidos.values.map((producto) {
+                    return DropdownMenuItem<String>(
+                      value: producto['nombre'],
+                      child: Text(producto['nombre']),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _nombreProductoSeleccionado = value ?? '';
+                      final codigoProducto = _productosEstablecidos.entries.firstWhere(
+                        (element) => element.value['nombre'] == _nombreProductoSeleccionado,
+                        orElse: () => MapEntry('', {'nombre': '', 'precio': 0.0}),
+                      );
+                      if (codigoProducto.key.isNotEmpty) {
+                        _codigoController.text = codigoProducto.key;
+                        _precioUnitarioController.text = codigoProducto.value['precio'].toString();
+                      }
+                    });
+                  },
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Por favor, seleccione un producto';
+                    }
+                    return null;
+                  },
                 ),
                 _TextFieldCustom(
                   icono: Icons.format_list_numbered,
@@ -386,7 +421,7 @@ class _FormularioFacturaPageState extends State<FormularioFacturaPage> {
                   controller: _cantidadController,
                 ),
                 _TextFieldCustom(
-                  icono: Icons.attach_money,
+                  icono: Icons.monetization_on,
                   type: TextInputType.number,
                   texto: 'Precio Unitario',
                   controller: _precioUnitarioController,
@@ -425,8 +460,37 @@ class _FormularioFacturaPageState extends State<FormularioFacturaPage> {
                   ),
                 ),
                 SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    ElevatedButton(
+                      onPressed: _agregarProducto,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Color(0xff5511b0),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(50),
+                        ),
+                        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                      ),
+                      child: Text('Agregar Producto', style: TextStyle(color: Colors.white, fontSize: 18)),
+                    ),
+                    SizedBox(width: 10),
+                    ElevatedButton(
+                      onPressed: _mostrarBottomSheet,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Color(0xff5511b0),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(50),
+                        ),
+                        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                      ),
+                      child: Text('Ver productos', style: TextStyle(color: Colors.white, fontSize: 18)),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 20),
                 ElevatedButton(
-                  onPressed: _agregarProducto,
+                  onPressed: _guardarFactura,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Color(0xff5511b0),
                     shape: RoundedRectangleBorder(
@@ -434,7 +498,7 @@ class _FormularioFacturaPageState extends State<FormularioFacturaPage> {
                     ),
                     padding: EdgeInsets.symmetric(horizontal: 50, vertical: 15),
                   ),
-                  child: Text('Agregar Producto', style: TextStyle(color: Colors.white, fontSize: 18)),
+                  child: Text('Guardar Factura', style: TextStyle(color: Colors.white, fontSize: 18)),
                 ),
               ],
             ),

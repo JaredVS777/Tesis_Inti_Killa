@@ -3,6 +3,8 @@ import 'package:proyecto/api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'formulario_cliente_page.dart';
 import 'login_page.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class ClientePage extends StatefulWidget {
   @override
@@ -85,7 +87,7 @@ class _ClientePageState extends State<ClientePage> {
       var nuevoCliente = response['cliente'];
       print('Nuevo cliente: $nuevoCliente');  // Debugging
       setState(() {
-        _clientes.insert(0, nuevoCliente); // Insertar el cliente al principio de la lista con el _id correcto
+        _clientes.add(nuevoCliente); // Añadir el cliente al final de la lista
         _clientesFiltrados = _clientes;
       });
       ScaffoldMessenger.of(context).showSnackBar(
@@ -150,20 +152,59 @@ class _ClientePageState extends State<ClientePage> {
     final cliente = _clientes[index];
     final id = cliente['_id'];
 
-    bool success = await ApiService.eliminarCliente(token: token, id: id);
-    if (success) {
-      setState(() {
-        _clientes.removeAt(index);
-        _clientesFiltrados = _clientes;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Cliente eliminado correctamente')),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al eliminar el cliente')),
-      );
+    try {
+      bool success = await ApiService.eliminarCliente(token: token, id: id);
+      if (success) {
+        setState(() {
+          _clientes.removeAt(index);
+          _clientesFiltrados = _clientes;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Cliente eliminado correctamente')),
+        );
+      }
+    } catch (e) {
+      String errorMessage = 'Error al eliminar el cliente';
+      if (e is http.Response) {
+        final responseData = json.decode(e.body);
+        errorMessage = responseData['msg'];
+      } else if (e is Exception) {
+        if (e.toString().contains('registrado en una factura')) {
+          errorMessage = 'No se puede eliminar el cliente porque ya está registrado en una factura';
+        } else if (e.toString().contains('registrado en una proforma')) {
+          errorMessage = 'No se puede eliminar el cliente porque ya está registrado en una proforma';
+        } else if (e.toString().contains('registrado en una factura y una proforma')) {
+          errorMessage = 'No se puede eliminar el cliente porque ya está registrado en una factura y una proforma';
+        }
+      }
+
+      _mostrarErrorEliminacion(errorMessage);
     }
+  }
+
+  void _mostrarErrorEliminacion(String mensaje) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          content: Row(
+            children: [
+              Icon(Icons.warning, color: Colors.red),
+              SizedBox(width: 10),
+              Expanded(child: Text(mensaje)),
+            ],
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('Aceptar'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _confirmarModificacionCliente(Map<String, dynamic> cliente, int index) {
@@ -230,7 +271,7 @@ class _ClientePageState extends State<ClientePage> {
     if (clienteModificado != null) {
       setState(() {
         if (index == null) {
-          _clientes.insert(0, clienteModificado); // Insertar el cliente al principio de la lista
+          _clientes.add(clienteModificado); // Añadir el cliente al final de la lista
         } else {
           _clientes[index] = clienteModificado;
         }
@@ -402,7 +443,7 @@ class _ClientePageState extends State<ClientePage> {
     );
   }
 
-Widget _buildClienteCard(String id, String nombre, String cedula, String telefono, String direccion, String email, String tipodoc, int index) {
+  Widget _buildClienteCard(String id, String nombre, String cedula, String telefono, String direccion, String email, String tipodoc, int index) {
     final tipoDoc = _tipoDocMap[tipodoc] ?? 'Tipo de identificación no disponible';
     return Card(
       elevation: 5,
@@ -421,7 +462,7 @@ Widget _buildClienteCard(String id, String nombre, String cedula, String telefon
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
             ),
             SizedBox(height: 10),
-            _buildInfoRow('ID', id),
+            // _buildInfoRow('ID', id), // Comentamos esta línea para que el ID no se muestre en la tarjeta
             _buildInfoRow('Cédula', cedula),
             _buildInfoRow('Teléfono', telefono),
             _buildInfoRow('Dirección', direccion),

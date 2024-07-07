@@ -13,6 +13,7 @@ class _ProformaPageState extends State<ProformaPage> {
   List<dynamic> _proformas = [];
   List<dynamic> _proformasFiltradas = [];
   List<Map<String, dynamic>> _clientes = [];
+  List<Map<String, dynamic>> _empleados = [];
   TextEditingController _searchController = TextEditingController();
 
   @override
@@ -20,6 +21,7 @@ class _ProformaPageState extends State<ProformaPage> {
     super.initState();
     _fetchProformas();
     _fetchClientes();
+    _fetchEmpleados();
     _searchController.addListener(_onSearchChanged);
   }
 
@@ -53,7 +55,25 @@ class _ProformaPageState extends State<ProformaPage> {
         _clientes = clientes.map((cliente) {
           return {
             'id': cliente['_id'],
+            'nombre': cliente['nombre'],
             'cedula': cliente['cedula'],
+          };
+        }).toList();
+      });
+    }
+  }
+
+  Future<void> _fetchEmpleados() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('token');
+
+    if (token != null) {
+      List<dynamic> empleados = await ApiService.fetchEmpleados(token);
+      setState(() {
+        _empleados = empleados.map((empleado) {
+          return {
+            'id': empleado['_id'],
+            'nombreCompleto': '${empleado['nombre']} ${empleado['apellido']}',
           };
         }).toList();
       });
@@ -117,6 +137,16 @@ class _ProformaPageState extends State<ProformaPage> {
   String _getCedulaCliente(String idCliente) {
     final cliente = _clientes.firstWhere((cliente) => cliente['id'] == idCliente, orElse: () => {'cedula': 'N/A'});
     return cliente['cedula'];
+  }
+
+  String _getNombreCliente(String idCliente) {
+    final cliente = _clientes.firstWhere((cliente) => cliente['id'] == idCliente, orElse: () => {'nombre': 'N/A'});
+    return cliente['nombre'];
+  }
+
+  String _getNombreCompletoEmpleado(String idEmpleado) {
+    final empleado = _empleados.firstWhere((empleado) => empleado['id'] == idEmpleado, orElse: () => {'nombreCompleto': 'N/A'});
+    return empleado['nombreCompleto'];
   }
 
   @override
@@ -220,8 +250,13 @@ class _ProformaPageState extends State<ProformaPage> {
                   'Cédula Cliente: ${_getCedulaCliente(idCliente)}',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
                 ),
+                SizedBox(height: 5),
+                Text(
+                  'Nombre Cliente: ${_getNombreCliente(idCliente)}',
+                  style: TextStyle(fontSize: 16, color: Colors.black87),
+                ),
                 SizedBox(height: 10),
-                _buildInfoRow('ID Empleado', idEmpleado),
+                _buildInfoRow('Empleado', _getNombreCompletoEmpleado(idEmpleado)),
                 if (isExpanded) ...[
                   Text(
                     'Productos:',
@@ -248,12 +283,6 @@ class _ProformaPageState extends State<ProformaPage> {
                       icon: Icon(Icons.edit, color: Colors.blue),
                       onPressed: () {
                         _confirmarModificacionProforma(_proformasFiltradas[index], index);
-                      },
-                    ),
-                    IconButton(
-                      icon: Icon(Icons.picture_as_pdf, color: Colors.red),
-                      onPressed: () {
-                        // Acción para generar o ver PDF
                       },
                     ),
                   ],

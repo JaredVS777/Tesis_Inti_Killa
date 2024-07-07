@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'api_service.dart';
+import 'package:flutter_typeahead/flutter_typeahead.dart';
 
 class FormularioProformaPage extends StatefulWidget {
   final Map<String, dynamic>? proforma;
@@ -14,13 +15,14 @@ class FormularioProformaPage extends StatefulWidget {
 class _FormularioProformaPageState extends State<FormularioProformaPage> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _codigoController = TextEditingController();
-  final TextEditingController _nombreController = TextEditingController();
   final TextEditingController _cantidadController = TextEditingController();
   final TextEditingController _precioUnitarioController = TextEditingController();
   final TextEditingController _totalDescuentoController = TextEditingController();
-  final TextEditingController _idEmpleadoController = TextEditingController();
+  final TextEditingController _clienteController = TextEditingController();
 
   String _idCliente = '';
+  String _idEmpleado = '';
+  String _nombreCompletoEmpleado = '';
   List<Map<String, dynamic>> _productos = [];
   double _totalSinImpuestos = 0.0;
   double _totalDescuento = 0.0;
@@ -39,23 +41,21 @@ class _FormularioProformaPageState extends State<FormularioProformaPage> {
   void initState() {
     super.initState();
     _fetchClientes();
-    _setEmpleadoId();
+    _setEmpleadoInfo();
     if (widget.proforma != null) {
       _cargarDatosProforma(widget.proforma!);
     }
     _totalDescuentoController.addListener(_actualizarTotales);
     _codigoController.addListener(_actualizarProductoDesdeCodigo);
-    _nombreController.addListener(_actualizarProductoDesdeNombre);
   }
 
   @override
   void dispose() {
     _totalDescuentoController.removeListener(_actualizarTotales);
     _codigoController.removeListener(_actualizarProductoDesdeCodigo);
-    _nombreController.removeListener(_actualizarProductoDesdeNombre);
     _totalDescuentoController.dispose();
     _codigoController.dispose();
-    _nombreController.dispose();
+    _clienteController.dispose();
     super.dispose();
   }
 
@@ -63,36 +63,24 @@ class _FormularioProformaPageState extends State<FormularioProformaPage> {
     final codigo = _codigoController.text;
     if (_productosEstablecidos.containsKey(codigo)) {
       setState(() {
-        _nombreController.text = _productosEstablecidos[codigo]!['nombre'];
+        _nombreProductoSeleccionado = _productosEstablecidos[codigo]!['nombre'];
         _precioUnitarioController.text = _productosEstablecidos[codigo]!['precio'].toString();
-      });
-    }
-  }
-
-  void _actualizarProductoDesdeNombre() {
-    final nombre = _nombreController.text;
-    final codigoProducto = _productosEstablecidos.entries.firstWhere(
-      (element) => element.value['nombre'] == nombre,
-      orElse: () => MapEntry('', {'nombre': '', 'precio': 0.0}),
-    );
-
-    if (codigoProducto.key.isNotEmpty) {
-      setState(() {
-        _codigoController.text = codigoProducto.key;
-        _precioUnitarioController.text = codigoProducto.value['precio'].toString();
       });
     }
   }
 
   void _cargarDatosProforma(Map<String, dynamic> proforma) {
     _idCliente = proforma['id_cliente'];
-    _idEmpleadoController.text = proforma['id_empleado'];
+    _idEmpleado = proforma['id_empleado'];
     _productos = List<Map<String, dynamic>>.from(proforma['productos']);
     _totalSinImpuestos = proforma['totalSinImpuestos']?.toDouble() ?? 0.0;
     _totalDescuento = proforma['totalDescuento']?.toDouble() ?? 0.0;
     _totalImpuestoValor = proforma['totalImpuestoValor']?.toDouble() ?? 0.0;
     _importeTotal = proforma['importeTotal']?.toDouble() ?? 0.0;
     _actualizarTotales();
+
+    final cliente = _clientes.firstWhere((cliente) => cliente['id'] == _idCliente, orElse: () => {'nombre': 'N/A'});
+    _clienteController.text = cliente['nombre'] ?? 'N/A';
   }
 
   Future<void> _fetchClientes() async {
@@ -105,6 +93,7 @@ class _FormularioProformaPageState extends State<FormularioProformaPage> {
         _clientes = clientes.map((cliente) {
           return {
             'id': cliente['_id'],
+            'nombre': cliente['nombre'],
             'cedula': cliente['cedula'],
           };
         }).toList();
@@ -112,13 +101,16 @@ class _FormularioProformaPageState extends State<FormularioProformaPage> {
     }
   }
 
-  Future<void> _setEmpleadoId() async {
+  Future<void> _setEmpleadoInfo() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? idEmpleado = prefs.getString('_id'); // Usamos '_id' ya que es el identificador del empleado
+    String? idEmpleado = prefs.getString('_id');
+    String? nombreEmpleado = prefs.getString('nombre');
+    String? apellidoEmpleado = prefs.getString('apellido');
 
-    if (idEmpleado != null) {
+    if (idEmpleado != null && nombreEmpleado != null && apellidoEmpleado != null) {
       setState(() {
-        _idEmpleadoController.text = idEmpleado; // Establecer el ID del empleado en el controlador del campo de texto
+        _idEmpleado = idEmpleado;
+        _nombreCompletoEmpleado = '$nombreEmpleado $apellidoEmpleado';
       });
     }
   }
@@ -130,42 +122,38 @@ class _FormularioProformaPageState extends State<FormularioProformaPage> {
     }
     setState(() {
       _totalSinImpuestos = total;
-      _actualizarTotales(); // Actualizamos los totales cuando cambia el total sin impuestos
+      _actualizarTotales();
     });
   }
 
   void _actualizarTotales() {
     setState(() {
       _totalDescuento = double.tryParse(_totalDescuentoController.text) ?? 0.0;
-      _totalImpuestoValor = _totalSinImpuestos * 0.15; // 15% de IVA
+      _totalImpuestoValor = _totalSinImpuestos * 0.15;
       _importeTotal = _totalSinImpuestos + _totalImpuestoValor - _totalDescuento;
     });
   }
 
   void _agregarProducto() {
     if (_codigoController.text.isNotEmpty &&
-        _nombreController.text.isNotEmpty &&
+        _nombreProductoSeleccionado.isNotEmpty &&
         _cantidadController.text.isNotEmpty &&
         _precioUnitarioController.text.isNotEmpty) {
       setState(() {
         _productos.add({
           'codigo': _codigoController.text,
-          'nombre': _nombreController.text,
+          'nombre': _nombreProductoSeleccionado,
           'cantidad': int.parse(_cantidadController.text),
           'precioUnitario': double.parse(_precioUnitarioController.text),
         });
 
-        // Limpiar campos
         _codigoController.clear();
-        _nombreController.clear();
         _cantidadController.clear();
         _precioUnitarioController.clear();
 
-        // Calcular el total sin impuestos
         _calcularTotalSinImpuestos();
       });
 
-      // Mostrar el BottomSheet con la tabla de productos y los campos adicionales
       _mostrarBottomSheet();
     }
   }
@@ -204,8 +192,8 @@ class _FormularioProformaPageState extends State<FormularioProformaPage> {
                               setState(() {
                                 _productos.remove(producto);
                                 _calcularTotalSinImpuestos();
-                                Navigator.pop(context); // Cerrar el BottomSheet
-                                _mostrarBottomSheet(); // Volver a mostrar el BottomSheet actualizado
+                                Navigator.pop(context);
+                                _mostrarBottomSheet();
                               });
                             },
                           ),
@@ -256,17 +244,16 @@ class _FormularioProformaPageState extends State<FormularioProformaPage> {
                 SizedBox(height: 20),
                 ElevatedButton(
                   onPressed: () {
-                    Navigator.pop(context); // Cerrar el BottomSheet
-                    _guardarProforma();
+                    Navigator.pop(context);
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xff5511b0),
+                    backgroundColor: Colors.grey,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(50),
                     ),
                     padding: EdgeInsets.symmetric(horizontal: 50, vertical: 15),
                   ),
-                  child: Text('Guardar Proforma', style: TextStyle(color: Colors.white, fontSize: 18)),
+                  child: Text('Regresar', style: TextStyle(color: Colors.white, fontSize: 18)),
                 ),
               ],
             ),
@@ -297,7 +284,7 @@ class _FormularioProformaPageState extends State<FormularioProformaPage> {
             success = await ApiService.agregarProforma(
               token: token,
               idCliente: _idCliente,
-              idEmpleado: _idEmpleadoController.text,
+              idEmpleado: _idEmpleado,
               productos: _productos,
               totalSinImpuestos: _totalSinImpuestos,
               totalDescuento: _totalDescuento,
@@ -309,7 +296,7 @@ class _FormularioProformaPageState extends State<FormularioProformaPage> {
               token: token,
               idProforma: widget.proforma!['_id'],
               idCliente: _idCliente,
-              idEmpleado: _idEmpleadoController.text,
+              idEmpleado: _idEmpleado,
               productos: _productos,
               totalSinImpuestos: _totalSinImpuestos,
               totalDescuento: _totalDescuento,
@@ -322,7 +309,7 @@ class _FormularioProformaPageState extends State<FormularioProformaPage> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text('Proforma guardada con éxito')),
             );
-            Navigator.pop(context, true); // Indicar que se guardó correctamente y recargar la lista
+            Navigator.pop(context, true);
           } else {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text('Error al guardar la proforma')),
@@ -337,6 +324,8 @@ class _FormularioProformaPageState extends State<FormularioProformaPage> {
       }
     }
   }
+
+  String _nombreProductoSeleccionado = '';
 
   @override
   Widget build(BuildContext context) {
@@ -354,9 +343,68 @@ class _FormularioProformaPageState extends State<FormularioProformaPage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
+                TypeAheadFormField(
+                  textFieldConfiguration: TextFieldConfiguration(
+                    controller: _clienteController,
+                    decoration: InputDecoration(
+                      labelText: 'Nombre del Cliente',
+                      filled: true,
+                      fillColor: Color(0xffEBDCFA),
+                      border: OutlineInputBorder(
+                        borderSide: BorderSide(color: Color(0xffEBDCFA)),
+                        borderRadius: BorderRadius.circular(50),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Color(0xffEBDCFA)),
+                        borderRadius: BorderRadius.circular(50),
+                      ),
+                    ),
+                  ),
+                  suggestionsCallback: (pattern) {
+                    return _clientes.where((cliente) =>
+                        cliente['nombre'].toLowerCase().contains(pattern.toLowerCase()));
+                  },
+                  itemBuilder: (context, suggestion) {
+                    return ListTile(
+                      title: Text(suggestion['nombre']),
+                    );
+                  },
+                  onSuggestionSelected: (suggestion) {
+                    setState(() {
+                      _clienteController.text = suggestion['nombre'];
+                      _idCliente = suggestion['id'];
+                    });
+                  },
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Por favor, seleccione un cliente';
+                    }
+                    return null;
+                  },
+                  onSaved: (value) {
+                    final cliente = _clientes.firstWhere((cliente) => cliente['nombre'] == value, orElse: () => {'id': ''});
+                    _idCliente = cliente['id'];
+                  },
+                ),
+                SizedBox(height: 20),
+                _TextFieldCustom(
+                  icono: Icons.person_outline,
+                  type: TextInputType.text,
+                  texto: 'Nombre del Empleado',
+                  controller: TextEditingController(text: _nombreCompletoEmpleado),
+                  readOnly: true,
+                ),
+                _TextFieldCustom(
+                  icono: Icons.code,
+                  type: TextInputType.text,
+                  texto: 'Código del Producto',
+                  controller: _codigoController,
+                  readOnly: true,
+                ),
                 DropdownButtonFormField<String>(
+                  value: _nombreProductoSeleccionado.isEmpty ? null : _nombreProductoSeleccionado,
                   decoration: InputDecoration(
-                    labelText: 'Cédula del Cliente',
+                    labelText: 'Nombre del Producto',
                     filled: true,
                     fillColor: Color(0xffEBDCFA),
                     border: OutlineInputBorder(
@@ -368,44 +416,31 @@ class _FormularioProformaPageState extends State<FormularioProformaPage> {
                       borderRadius: BorderRadius.circular(50),
                     ),
                   ),
-                  value: _idCliente.isNotEmpty ? _idCliente : null,
-                  items: _clientes.map((cliente) {
+                  items: _productosEstablecidos.values.map((producto) {
                     return DropdownMenuItem<String>(
-                      value: cliente['id'] ?? '', // Asegurarse de que value no sea null
-                      child: Text(cliente['cedula'] ?? '', style: TextStyle(color: Colors.black)), // Asegurarse de que el texto no sea null
+                      value: producto['nombre'],
+                      child: Text(producto['nombre']),
                     );
                   }).toList(),
                   onChanged: (value) {
                     setState(() {
-                      _idCliente = value!;
+                      _nombreProductoSeleccionado = value ?? '';
+                      final codigoProducto = _productosEstablecidos.entries.firstWhere(
+                        (element) => element.value['nombre'] == _nombreProductoSeleccionado,
+                        orElse: () => MapEntry('', {'nombre': '', 'precio': 0.0}),
+                      );
+                      if (codigoProducto.key.isNotEmpty) {
+                        _codigoController.text = codigoProducto.key;
+                        _precioUnitarioController.text = codigoProducto.value['precio'].toString();
+                      }
                     });
                   },
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Por favor, seleccione un cliente';
+                      return 'Por favor, seleccione un producto';
                     }
                     return null;
                   },
-                ),
-                SizedBox(height: 20),
-                _TextFieldCustom(
-                  icono: Icons.person_outline,
-                  type: TextInputType.text,
-                  texto: 'ID Empleado',
-                  controller: _idEmpleadoController,
-                  readOnly: true,
-                ),
-                _TextFieldCustom(
-                  icono: Icons.code,
-                  type: TextInputType.text,
-                  texto: 'Código del Producto',
-                  controller: _codigoController,
-                ),
-                _TextFieldCustom(
-                  icono: Icons.description,
-                  type: TextInputType.text,
-                  texto: 'Nombre del Producto',
-                  controller: _nombreController,
                 ),
                 _TextFieldCustom(
                   icono: Icons.format_list_numbered,
@@ -420,8 +455,37 @@ class _FormularioProformaPageState extends State<FormularioProformaPage> {
                   controller: _precioUnitarioController,
                 ),
                 SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    ElevatedButton(
+                      onPressed: _agregarProducto,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Color(0xff5511b0), 
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(50),
+                        ),
+                        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                      ),
+                      child: Text('Agregar Producto', style: TextStyle(color: Colors.white, fontSize: 18)),
+                    ),
+                    SizedBox(width: 10),
+                    ElevatedButton(
+                      onPressed: _mostrarBottomSheet,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor:Color(0xff5511b0), 
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(50),
+                        ),
+                        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                      ),
+                      child: Text('Ver productos', style: TextStyle(color: Colors.white, fontSize: 18)),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 20),
                 ElevatedButton(
-                  onPressed: _agregarProducto,
+                  onPressed: _guardarProforma,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Color(0xff5511b0),
                     shape: RoundedRectangleBorder(
@@ -429,7 +493,7 @@ class _FormularioProformaPageState extends State<FormularioProformaPage> {
                     ),
                     padding: EdgeInsets.symmetric(horizontal: 50, vertical: 15),
                   ),
-                  child: Text('Agregar Producto', style: TextStyle(color: Colors.white, fontSize: 18)),
+                  child: Text('Guardar Proforma', style: TextStyle(color: Colors.white, fontSize: 18)),
                 ),
               ],
             ),

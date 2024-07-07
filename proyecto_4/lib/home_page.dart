@@ -49,7 +49,7 @@ class _HomePageState extends State<HomePage> {
                       fontSize: 24,
                       fontWeight: FontWeight.bold
                   )),
-                  subtitle: Text('Seleccione una opción', style: TextStyle(
+                  subtitle: Text('¿Qué deseas gestionar hoy?', style: TextStyle(
                       color: Colors.white,
                       fontSize: 16
                   )),

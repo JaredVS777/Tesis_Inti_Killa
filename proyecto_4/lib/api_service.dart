@@ -159,49 +159,49 @@ class ApiService {
     }
   }
 
-  static Future<bool> modificarCliente({
-    required String token,
-    required String id,
-    required String nombre,
-    required String cedula,
-    required String telefono,
-    required String direccion,
-    required String email,
-    required String tipodoc, // Añadir el campo tipodoc aquí
-  }) async {
-    try {
-      if (id.isEmpty) {
-        throw Exception('El ID del cliente no puede estar vacío');
-      }
-
-      final response = await http.put(
-        Uri.parse('$baseUrl/cliente/actualizar/$id'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-        body: json.encode({
-          'nombre': nombre,
-          'cedula': cedula,
-          'telefono': telefono,
-          'direccion': direccion,
-          'email': email,
-          'tipodoc': tipodoc, // Añadir el campo tipodoc aquí
-        }),
-      );
-
-      if (response.statusCode == 200) {
-        return true;
-      } else {
-        print('Error al actualizar el cliente: ${response.statusCode}');
-        print('Cuerpo de la respuesta: ${response.body}');
-        throw Exception('Error al actualizar el cliente');
-      }
-    } catch (e) {
-      print('Error en la solicitud HTTP: $e');
-      throw e;
+static Future<bool> modificarCliente({
+  required String token,
+  required String id,
+  required String nombre,
+  required String cedula,
+  required String telefono,
+  required String direccion,
+  required String email,
+  required String tipodoc,
+}) async {
+  try {
+    if (id.isEmpty) {
+      throw Exception('El ID del cliente no puede estar vacío');
     }
+
+    final response = await http.put(
+      Uri.parse('$baseUrl/cliente/actualizar/$id'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: json.encode({
+        'nombre': nombre,
+        'cedula': cedula,
+        'telefono': telefono,
+        'direccion': direccion,
+        'email': email,
+        'tipodoc': tipodoc,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      return true;
+    } else {
+      print('Error al actualizar el cliente: ${response.statusCode}');
+      print('Cuerpo de la respuesta: ${response.body}');
+      throw Exception('Error al actualizar el cliente');
+    }
+  } catch (e) {
+    print('Error en la solicitud HTTP: $e');
+    throw e;
   }
+}
 
   static Future<bool> eliminarCliente({
     required String token,
@@ -221,7 +221,7 @@ class ApiService {
       } else {
         print('Error al eliminar el cliente: ${response.statusCode}');
         print('Cuerpo de la respuesta: ${response.body}');
-        throw Exception('Error al eliminar el cliente');
+        throw http.Response(response.body, response.statusCode); // Lanzar la respuesta completa
       }
     } catch (e) {
       print('Error en la solicitud HTTP: $e');
@@ -539,7 +539,7 @@ class ApiService {
   }
 
   // Funciones para enviar y autorizar facturas al SRI
-  static Future<bool> enviarSRI(String token, String claveAcceso) async {
+  static Future<Map<String, dynamic>> enviarSRI(String token, String claveAcceso) async {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/factura/recibir'),
@@ -552,19 +552,19 @@ class ApiService {
 
       if (response.statusCode == 200) {
         print('Factura enviada al SRI exitosamente.');
-        return true;
+        return {'success': true, 'message': 'Factura enviada al SRI exitosamente.'};
       } else {
         print('Error al enviar la factura al SRI: ${response.statusCode}');
         print('Cuerpo de la respuesta: ${response.body}');
-        return false;
+        return {'success': false, 'message': 'Error al enviar la factura al SRI.'};
       }
     } catch (e) {
       print('Error en la solicitud HTTP: $e');
-      return false;
+      return {'success': false, 'message': 'Error en la solicitud HTTP: $e'};
     }
   }
 
-  static Future<bool> autorizarSRI(String token, String claveAcceso) async {
+  static Future<Map<String, dynamic>> autorizarSRI(String token, String claveAcceso) async {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/factura/autorizacion'),
@@ -577,15 +577,38 @@ class ApiService {
 
       if (response.statusCode == 200) {
         print('Factura autorizada exitosamente.');
-        return true;
+        return {'success': true, 'message': 'Factura autorizada exitosamente.'};
       } else {
         print('Error al autorizar la factura: ${response.statusCode}');
         print('Cuerpo de la respuesta: ${response.body}');
-        return false;
+        return {'success': false, 'message': 'Error al autorizar la factura.'};
       }
     } catch (e) {
       print('Error en la solicitud HTTP: $e');
-      return false;
+      return {'success': false, 'message': 'Error en la solicitud HTTP: $e'};
     }
   }
+static Future<List<dynamic>> fetchEmpleados(String token) async {
+  try {
+    final response = await http.get(
+      Uri.parse('$baseUrl/empleados'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      print('Error al cargar los empleados: ${response.statusCode}');
+      print('Cuerpo de la respuesta: ${response.body}');
+      throw Exception('Error al cargar los empleados desde la API');
+    }
+  } catch (e) {
+    print('Error en la solicitud HTTP: $e');
+    throw e;
+  }
+}
+
 }

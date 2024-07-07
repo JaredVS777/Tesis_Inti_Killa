@@ -13,6 +13,7 @@ class _FacturaPageState extends State<FacturaPage> {
   List<dynamic> _facturas = [];
   List<dynamic> _facturasFiltradas = [];
   List<Map<String, dynamic>> _clientes = [];
+  List<Map<String, dynamic>> _empleados = [];
   TextEditingController _searchController = TextEditingController();
 
   final Map<String, String> _metodoPagoMap = {
@@ -31,6 +32,7 @@ class _FacturaPageState extends State<FacturaPage> {
     super.initState();
     _fetchFacturas();
     _fetchClientes();
+    _fetchEmpleados();
     _searchController.addListener(_onSearchChanged);
   }
 
@@ -65,6 +67,24 @@ class _FacturaPageState extends State<FacturaPage> {
           return {
             'id': cliente['_id'],
             'cedula': cliente['cedula'],
+            'nombre': cliente['nombre'],
+          };
+        }).toList();
+      });
+    }
+  }
+
+  Future<void> _fetchEmpleados() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('token');
+
+    if (token != null) {
+      List<dynamic> empleados = await ApiService.fetchEmpleados(token);
+      setState(() {
+        _empleados = empleados.map((empleado) {
+          return {
+            'id': empleado['_id'],
+            'nombreCompleto': '${empleado['nombre']} ${empleado['apellido']}',
           };
         }).toList();
       });
@@ -96,37 +116,43 @@ class _FacturaPageState extends State<FacturaPage> {
     }
   }
 
-  Future<void> _enviarSRI(String claveAcceso) async {
+  Future<void> _enviarSRI(String claveAcceso, int index) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? token = prefs.getString('token');
 
     if (token != null) {
-      bool success = await ApiService.enviarSRI(token, claveAcceso);
-      if (success) {
+      var response = await ApiService.enviarSRI(token, claveAcceso);
+      if (response['success']) {
+        setState(() {
+          _facturasFiltradas[index]['enviadoSRI'] = true;
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Factura enviada al SRI correctamente')),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al enviar la factura al SRI')),
+          SnackBar(content: Text(response['message'])),
         );
       }
     }
   }
 
-  Future<void> _autorizarSRI(String claveAcceso) async {
+  Future<void> _autorizarSRI(String claveAcceso, int index) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? token = prefs.getString('token');
 
     if (token != null) {
-      bool success = await ApiService.autorizarSRI(token, claveAcceso);
-      if (success) {
+      var response = await ApiService.autorizarSRI(token, claveAcceso);
+      if (response['success']) {
+        setState(() {
+          _facturasFiltradas[index]['autorizadoSRI'] = true;
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Factura autorizada correctamente')),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al autorizar la factura')),
+          SnackBar(content: Text(response['message'])),
         );
       }
     }
@@ -135,6 +161,16 @@ class _FacturaPageState extends State<FacturaPage> {
   String _getCedulaCliente(String idCliente) {
     final cliente = _clientes.firstWhere((cliente) => cliente['id'] == idCliente, orElse: () => {'cedula': 'N/A'});
     return cliente['cedula'];
+  }
+
+  String _getNombreCliente(String idCliente) {
+    final cliente = _clientes.firstWhere((cliente) => cliente['id'] == idCliente, orElse: () => {'nombre': 'N/A'});
+    return cliente['nombre'];
+  }
+
+  String _getNombreCompletoEmpleado(String idEmpleado) {
+    final empleado = _empleados.firstWhere((empleado) => empleado['id'] == idEmpleado, orElse: () => {'nombreCompleto': 'N/A'});
+    return empleado['nombreCompleto'];
   }
 
   @override
@@ -198,6 +234,9 @@ class _FacturaPageState extends State<FacturaPage> {
                     factura['importeTotal'].toString(),
                     _metodoPagoMap[factura['formaPago']] ?? 'Método no disponible',
                     factura['claveAcceso'],
+                    index,
+                    factura['enviadoSRI'] ?? false,
+                    factura['autorizadoSRI'] ?? false,
                   );
                 },
               ),
@@ -209,96 +248,99 @@ class _FacturaPageState extends State<FacturaPage> {
   }
 
   Widget _buildFacturaCard(
-    String idCliente,
-    String idEmpleado,
-    List<dynamic> productos,
-    String totalSinImpuestos,
-    String totalDescuento,
-    String totalImpuestoValor,
-    String importeTotal,
-    String formaPago,
-    String claveAcceso,
-  ) {
-    bool isExpanded = false;
-    return StatefulBuilder(
-      builder: (BuildContext context, StateSetter setState) {
-        return Card(
-          elevation: 5,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15),
-          ),
-          shadowColor: Colors.black54,
-          margin: EdgeInsets.all(10),
-          child: Padding(
-            padding: EdgeInsets.all(15),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+  String idCliente,
+  String idEmpleado,
+  List<dynamic> productos,
+  String totalSinImpuestos,
+  String totalDescuento,
+  String totalImpuestoValor,
+  String importeTotal,
+  String formaPago,
+  String claveAcceso,
+  int index,
+  bool enviadoSRI,
+  bool autorizadoSRI,
+) {
+  bool isExpanded = false;
+  return StatefulBuilder(
+    builder: (BuildContext context, StateSetter setState) {
+      return Card(
+        elevation: 5,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(15),
+        ),
+        shadowColor: Colors.black54,
+        margin: EdgeInsets.all(10),
+        child: Padding(
+          padding: EdgeInsets.all(15),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Cédula Cliente: ${_getCedulaCliente(idCliente)}',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
+              ),
+              SizedBox(height: 5),
+              Text(
+                'Nombre Cliente: ${_getNombreCliente(idCliente)}',
+                style: TextStyle(fontSize: 16, color: Colors.black87),
+              ),
+              SizedBox(height: 10),
+              _buildInfoRow('Empleado', _getNombreCompletoEmpleado(idEmpleado)),
+              if (isExpanded) ...[
                 Text(
-                  'Cédula Cliente: ${_getCedulaCliente(idCliente)}',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
+                  'Productos:',
+                  style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
                 ),
-                SizedBox(height: 10),
-                _buildInfoRow('ID Empleado', idEmpleado),
-                if (isExpanded) ...[
-                  Text(
-                    'Productos:',
-                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
-                  ),
-                  ..._buildProductList(productos),
-                  _buildInfoRow('Total sin Impuestos', totalSinImpuestos),
-                  _buildInfoRow('Total Descuento', totalDescuento),
-                  _buildInfoRow('Total Impuesto Valor', totalImpuestoValor),
-                  _buildInfoRow('Importe Total', importeTotal),
-                  _buildInfoRow('Método de Pago', formaPago),
-                ],
-                TextButton(
-                  onPressed: () {
-                    setState(() {
-                      isExpanded = !isExpanded;
-                    });
-                  },
-                  child: Text(isExpanded ? 'Ver menos...' : 'Ver más...'),
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    IconButton(
-                      icon: Icon(Icons.picture_as_pdf, color: Colors.red),
-                      onPressed: () {
-                        // Acción para generar o ver PDF
-                      },
-                    ),
-                    ElevatedButton(
-                      onPressed: () => _enviarSRI(claveAcceso),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10.0),
-                        ),
-                      ),
-                      child: Text('ENVIAR SRI', style: TextStyle(color: Colors.white)),
-                    ),
-                    SizedBox(width: 10),
-                    ElevatedButton(
-                      onPressed: () => _autorizarSRI(claveAcceso),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10.0),
-                        ),
-                      ),
-                      child: Text('AUTORIZAR', style: TextStyle(color: Colors.white)),
-                    ),
-                  ],
-                ),
+                ..._buildProductList(productos),
+                _buildInfoRow('Total sin Impuestos', totalSinImpuestos),
+                _buildInfoRow('Total Descuento', totalDescuento),
+                _buildInfoRow('Total Impuesto Valor', totalImpuestoValor),
+                _buildInfoRow('Importe Total', importeTotal),
+                _buildInfoRow('Método de Pago', formaPago),
               ],
-            ),
+              TextButton(
+                onPressed: () {
+                  setState(() {
+                    isExpanded = !isExpanded;
+                  });
+                },
+                child: Text(isExpanded ? 'Ver menos...' : 'Ver más...'),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  ElevatedButton(
+                    onPressed: enviadoSRI ? null : () => _enviarSRI(claveAcceso, index),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: enviadoSRI ? Colors.grey : Colors.blue,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
+                    ),
+                    child: Text('ENVIAR SRI', style: TextStyle(color: Colors.white)),
+                  ),
+                  SizedBox(width: 10),
+                  ElevatedButton(
+                    onPressed: autorizadoSRI ? null : (enviadoSRI ? () => _autorizarSRI(claveAcceso, index) : null),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: autorizadoSRI ? Colors.grey : (enviadoSRI ? Colors.green : Colors.grey),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
+                    ),
+                    child: Text('AUTORIZAR', style: TextStyle(color: Colors.white)),
+                  ),
+                ],
+              ),
+            ],
           ),
-        );
-      },
-    );
-  }
+        ),
+      );
+    },
+  );
+}
+
 
   Widget _buildInfoRow(String label, String value) {
     return Padding(

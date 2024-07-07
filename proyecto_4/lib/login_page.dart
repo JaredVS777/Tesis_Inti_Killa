@@ -36,11 +36,42 @@ class LoginPage extends StatelessWidget {
   }
 }
 
-class _BottonSignIn extends StatelessWidget {
+class _BottonSignIn extends StatefulWidget {
   final TextEditingController usernameController;
   final TextEditingController passwordController;
 
   _BottonSignIn({required this.usernameController, required this.passwordController});
+
+  @override
+  __BottonSignInState createState() => __BottonSignInState();
+}
+
+class __BottonSignInState extends State<_BottonSignIn> {
+  void _showErrorDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Row(
+            children: [
+              Icon(Icons.error, color: Colors.red),
+              SizedBox(width: 10),
+              Text('Error'),
+            ],
+          ),
+          content: Text('ERROR AL INICIO DE SESION, VERIFIQUE EL USUARIO Y CONTRASEÑA'),
+          actions: [
+            TextButton(
+              child: Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -56,8 +87,8 @@ class _BottonSignIn extends StatelessWidget {
           style: TextStyle(color: Colors.white, fontSize: 18),
         ),
         onPressed: () async {
-          final username = usernameController.text;
-          final password = passwordController.text;
+          final username = widget.usernameController.text;
+          final password = widget.passwordController.text;
           final success = await ApiService.login(username, password); // Cambiar aquí para usar el nombre de usuario
           if (success) {
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -65,9 +96,7 @@ class _BottonSignIn extends StatelessWidget {
             ));
             Navigator.pushReplacementNamed(context, '/home');
           } else {
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text('Error en el inicio de sesión'),
-            ));
+            _showErrorDialog(context); // Mostrar el diálogo de error
           }
         },
       ),
@@ -94,11 +123,19 @@ class _UsernameAndPassword extends StatefulWidget {
 
 class __UsernameAndPasswordState extends State<_UsernameAndPassword> {
   bool _obscureText = true;
+  final int _maxUsernameLength = 15;
+  final int _maxPasswordLength = 20;
 
   void _togglePasswordView() {
     setState(() {
       _obscureText = !_obscureText;
     });
+  }
+
+  void _showMaxLengthWarning(BuildContext context, String field, int maxLength) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text('Se permite hasta $maxLength caracteres en el campo $field'),
+    ));
   }
 
   @override
@@ -107,11 +144,38 @@ class __UsernameAndPasswordState extends State<_UsernameAndPassword> {
       padding: const EdgeInsets.symmetric(horizontal: 20.0),
       child: Column(
         children: [
-          _TextFieldCustom(icono: Icons.person_outline, type: TextInputType.text, texto: 'Usuario', controller: widget.usernameController),
+          TextField(
+            controller: widget.usernameController,
+            keyboardType: TextInputType.text,
+            maxLength: _maxUsernameLength,
+            decoration: InputDecoration(
+              hintText: 'Usuario',
+              filled: true,
+              fillColor: Color(0xffEBDCFA),
+              prefixIcon: Icon(Icons.person_outline, color: Colors.grey),
+              border: OutlineInputBorder(
+                borderSide: BorderSide(color: Color(0xffEBDCFA)),
+                borderRadius: BorderRadius.circular(50),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: Color(0xffEBDCFA)),
+                borderRadius: BorderRadius.circular(50),
+              ),
+            ),
+            onChanged: (value) {
+              if (value.length > _maxUsernameLength) {
+                widget.usernameController.text = value.substring(0, _maxUsernameLength);
+                widget.usernameController.selection = TextSelection.fromPosition(
+                  TextPosition(offset: _maxUsernameLength),
+                );
+                _showMaxLengthWarning(context, 'Usuario', _maxUsernameLength);
+              }
+            },
+          ),
           Align(
             alignment: Alignment.centerRight,
             child: GestureDetector(
-              onTap: () { 
+              onTap: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => RecuperacionUsuarioPage()),
@@ -131,6 +195,7 @@ class __UsernameAndPasswordState extends State<_UsernameAndPassword> {
             controller: widget.passwordController,
             keyboardType: TextInputType.text,
             obscureText: _obscureText,
+            maxLength: _maxPasswordLength,
             decoration: InputDecoration(
               hintText: 'Contraseña',
               filled: true,
@@ -152,6 +217,15 @@ class __UsernameAndPasswordState extends State<_UsernameAndPassword> {
                 onPressed: _togglePasswordView,
               ),
             ),
+            onChanged: (value) {
+              if (value.length > _maxPasswordLength) {
+                widget.passwordController.text = value.substring(0, _maxPasswordLength);
+                widget.passwordController.selection = TextSelection.fromPosition(
+                  TextPosition(offset: _maxPasswordLength),
+                );
+                _showMaxLengthWarning(context, 'Contraseña', _maxPasswordLength);
+              }
+            },
           ),
           Align(
             alignment: Alignment.centerRight,
