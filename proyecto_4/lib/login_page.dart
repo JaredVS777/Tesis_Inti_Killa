@@ -298,8 +298,8 @@ class _LogoHeader extends StatelessWidget {
       top: 80,
       left: MediaQuery.of(context).size.width * 0.38,
       child: Container(
-        height: 80,
-        width: 80,
+        height: 120,
+        width: 120,
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(50),
