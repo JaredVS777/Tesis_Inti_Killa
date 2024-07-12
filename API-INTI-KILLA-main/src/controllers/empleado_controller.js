@@ -6,9 +6,10 @@ import { sendMailToEmpleado, sendMailToRecoveryPasswordEmpleado, sendMailToRecov
 const loginEmpleado = async(req,res)=>{
     const {username,password} = req.body
     if (Object.values(req.body).includes("")) return res.status(404).json({msg:"Lo sentimos, debes llenar todos los campos"})
-    const empleadoBDD = await Empleado.findOne({username}).select("-status -__v -token -updatedAt -createdAt")
-    if(empleadoBDD?.confirmEmail===false) return res.status(403).json({msg:"Lo sentimos, debe verificar su cuenta"})
+    const empleadoBDD = await Empleado.findOne({username}).select("-__v -token -updatedAt -createdAt")
     if(!empleadoBDD) return res.status(404).json({msg:"Lo sentimos, el usuario no se encuentra registrado"})
+    if(empleadoBDD?.confirmEmail===false) return res.status(403).json({msg:"Lo sentimos, debe verificar su cuenta"})
+    if(empleadoBDD?.status===false) return res.status(402).json({msg:"Lo sentimos, pero su usuario no se encuantra activado"})
     const verificarPassword = await empleadoBDD.matchPassword(password)
     if(!verificarPassword) return res.status(404).json({msg:"Lo sentimos, el password no es el correcto"})
     const token = generarJWT(empleadoBDD._id,"empleado")
@@ -30,13 +31,13 @@ const perfilEmpleado =(req,res)=>{
     res.status(200).json(req.empleadoBDD)
 }
 const listarEmpleados = async (req,res)=>{
-    const empleados = await Empleado.find({estado:true}).where('empleado').equals(req.empleadoBDD).select("-createdAt -updatedAt -__v").populate('_id nombre apellido cedula telefono direccion email usuario password token')
+    const empleados = await Empleado.find({status:true}).select("-createdAt -updatedAt -__v")
     res.status(200).json(empleados)
 }
 const detalleEmpleado = async(req,res)=>{
     const {id} = req.params
-    if( !mongoose.Types.ObjectId.isValid(id) ) return res.status(404).json({msg:`Lo sentimos, no existe el Empleado ${id}`});
-    const empleado = await Empleado.findById(id).select("-createdAt -updatedAt -__v").populate('_id nombre apellido cedula telefono direccion email usuario password token')
+    const empleado = await Empleado.findById(id).select("-createdAt -updatedAt -__v -password").populate('_id nombre apellido cedula telefono direccion email username status confirmEmail')
+    if(!empleado) return res.status(404).json({msg:`Lo sentimos, no existe el Empleado ${id}`})
     res.status(200).json(empleado)
 }
 const registrarEmpleado = async(req,res)=>{
@@ -158,7 +159,7 @@ const eliminarEmpleado = async (req,res)=>{
     if (Object.values(req.body).includes("")) return res.status(400).json({msg:"Lo sentimos, debes llenar todos los campos"})
     if( !mongoose.Types.ObjectId.isValid(id) ) return res.status(404).json({msg:`Lo sentimos, no existe el Empleado ${id}`})
     const {salida} = req.body
-    await Empleado.findByIdAndUpdate(req.params.id,{salida:Date.parse(salida),estado:false});
+    await Empleado.findByIdAndUpdate(req.params.id,{salida:Date.parse(salida),status:false});
     res.status(200).json({msg:"Fecha de salida del Empleado registrado exitosamente"})
 }
 

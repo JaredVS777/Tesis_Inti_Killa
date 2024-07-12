@@ -13,7 +13,7 @@ const detalleFactura = async(req,res)=>{
   const factura = await Factura.findById(id).select("-createdAt -updatedAt -__v")
   res.status(200).json(factura)
 }
-const enviarFactura = async(mail, claveAcceso) => {
+const enviarFactura = async(nombre, mail, secuencial, claveAcceso, filePath) => {
   try {
     const facturaBDD = await Factura.findOne({ claveAcceso }).select("-createdAt -updatedAt -__v");
     if (!facturaBDD) return res.status(400).json({ msg: "Lo sentimos, la factura no se encuentra registrada" })
@@ -23,7 +23,7 @@ const enviarFactura = async(mail, claveAcceso) => {
       return { msg: "Error al generar el archivo PDF de la factura" };
     }
     
-    const enviarPDF = await sendMailFactura(mail, pdfPath);
+    const enviarPDF = await sendMailFactura(nombre, mail, secuencial, pdfPath, filePath);
 
   } catch (error) {
     console.error("Error en enviar la factura al correo:", error);

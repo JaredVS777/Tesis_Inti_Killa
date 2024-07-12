@@ -7,6 +7,8 @@ import Cliente from "../models/Cliente.js";
 import Factura from "../models/Factura.js";
 import { enviarFactura } from './facturaListar_controller.js';
 
+const rucEmpresa = '1708978539001';
+
 // Función para generar la clave de acceso
 const generateAccessKey = (fecha, tipoComprobante, rucEmpresa, produccionPrueba, estab, ptoEmi, secuencial, idcod, tipoEmision) => {
   let suma = 0, factor = 2;
@@ -240,55 +242,81 @@ const generateInvoiceXml = async (req, res) => {
 
           await nuevaFactura.save();
 
-          const endpointRecepcion = `http://paules-001-site1.etempurl.com/api/facturacion/RecepcionPrueba?ClaveAcceso=${claveAcceso}&RucEmpresa=${ruc}`;
+          // const endpointRecepcion = `http://paules-001-site1.etempurl.com/api/facturacion/RecepcionPrueba?ClaveAcceso=${claveAcceso}&RucEmpresa=${ruc}`;
 
-          const responseRecepcion = await axios.get(endpointRecepcion, {
-            auth: auth,
-            headers: { 
-              'accept': 'text/plain' 
-            }
-          })
-          console.log('Respuesta del servidor (RecepcionPrueba):', responseRecepcion.data);
+          // const responseRecepcion = await axios.get(endpointRecepcion, {
+          //   auth: auth,
+          //   headers: { 
+          //     'accept': 'text/plain' 
+          //   }
+          // })
+          // console.log('Respuesta del servidor (RecepcionPrueba):', responseRecepcion.data);
 
-          const endpointAutorizacion = `http://paules-001-site1.etempurl.com/api/facturacion/AutorizacionPrueba?ClaveAcceso=${claveAcceso}&RucEmpresa=${ruc}`;
+          // const endpointAutorizacion = `http://paules-001-site1.etempurl.com/api/facturacion/AutorizacionPrueba?ClaveAcceso=${claveAcceso}&RucEmpresa=${ruc}`;
 
-          const responseAutorizacion = await axios.get(endpointAutorizacion, {
-            auth: auth,
-            headers: {
-              'accept': 'text/plain' 
-            }
-          })
-          console.log('Respuesta del servidor (AutorizacionPrueba):', responseAutorizacion.data);
+          // const responseAutorizacion = await axios.get(endpointAutorizacion, {
+          //   auth: auth,
+          //   headers: {
+          //     'accept': 'text/plain' 
+          //   }
+          // })
+          // console.log('Respuesta del servidor (AutorizacionPrueba):', responseAutorizacion.data);
 
 
-          try {
-            await fs.promises.unlink(filePath);
-            console.log(`Archivo XML '${path.basename(filePath)}' eliminado correctamente.`);
-          } catch (error) {
-            console.error('Error al intentar eliminar el archivo XML:', error);
-          }
+          // try {
+          //   await fs.promises.unlink(filePath);
+          //   console.log(`Archivo XML '${path.basename(filePath)}' eliminado correctamente.`);
+          // } catch (error) {
+          //   console.error('Error al intentar eliminar el archivo XML:', error);
+          // }
+
+          const facturaBDD = await Factura.findOne({ claveAcceso }).select("-createdAt -updatedAt -__v");
 
           const mailFactura = async (req, res) => {
             try {
-                const resultadoEnvio = await enviarFactura(email, claveAcceso);
+                const resultadoEnvio = await enviarFactura(nombre, email, secuencial, claveAcceso, filePath);
 
-                return res.status(200).json({ message: 'Factura procesada y enviada correctamente al correo' });
+                try {
+                  await fs.promises.unlink(filePath);
+                  console.log(`Archivo XML '${path.basename(filePath)}' eliminado correctamente.`);
+                } catch (error) {
+                  console.error('Error al intentar eliminar el archivo XML:', error);
+                }
+                
+                return res.status(200).json({ message: 'Factura procesada y enviada correctamente al correo', factura: facturaBDD});
             } catch (error) {
                 console.error("Error en mailFactura:", error);
-                return res.status(500).json({ message: 'Error en el servidor al procesar la factura' });
+
+                try {
+                  await fs.promises.unlink(filePath);
+                  console.log(`Archivo XML '${path.basename(filePath)}' eliminado correctamente.`);
+                } catch (error) {
+                  console.error('Error al intentar eliminar el archivo XML:', error);
+                }
+
+                return res.status(500).json({ message: 'Factura procesada pero error al enviar la factura al correo', factura: facturaBDD});
             }
         };
 
-        try {
-          const resultadoEnvio = await enviarFactura(clienteBDD.email, claveAcceso);
+        mailFactura(req, res);
+
+        // try {
+        //   await fs.promises.unlink(filePath);
+        //   console.log(`Archivo XML '${path.basename(filePath)}' eliminado correctamente.`);
+        // } catch (error) {
+        //   console.error('Error al intentar eliminar el archivo XML:', error);
+        // }
+
+        // try {
+        //   const resultadoEnvio = await enviarFactura(clienteBDD.email, claveAcceso);
   
-          // Responder al cliente con el mensaje de éxito
-          return res.status(200).json({ message: 'Factura procesada y enviada correctamente al correo' });
-        } catch (error) {
-          console.error("Error en enviar factura por correo electrónico:", error);
-          return res.status(500).json({ message: 'Error en el servidor al enviar la factura por correo electrónico' });
-        }
-  
+        //   // Responder al cliente con el mensaje de éxito
+        //   return res.status(200).json({ message: 'Factura procesada y enviada correctamente al correo' });
+        // } catch (error) {
+        //   console.error("Error en enviar factura por correo electrónico:", error);
+        //   return res.status(500).json({ message: 'Error en el servidor al enviar la factura por correo electrónico' });
+        // }
+        
         } catch (error) {
           console.error('Error en la petición POST (facturacion):', error);
           res.status(500).json({ message: 'Error en el proceso de facturacion' });
@@ -301,6 +329,71 @@ const generateInvoiceXml = async (req, res) => {
     }
   };
 
+const recepcionSRI = async(req,res)=>{
+  const username = '11182847';
+  const password = '60-dayfreetrial';
+
+  const auth = {
+    username: username,
+    password: password
+  };
+  const {claveAcceso} = req.body
+  if (!claveAcceso) return res.status(400).json({ msg: "Lo sentimos, debes enviar la clave de Acceso" });
+
+  try {
+    const endpointRecepcion = `http://paules-001-site1.etempurl.com/api/facturacion/RecepcionPrueba?ClaveAcceso=${claveAcceso}&RucEmpresa=${rucEmpresa}`;
+
+    const responseRecepcion = await axios.get(endpointRecepcion, {
+      auth: auth,
+      headers: { 
+        'accept': 'application/json'
+      }
+    })
+
+    const mensaje = `Respuesta del servidor (RecepcionPrueba): ${JSON.stringify(responseRecepcion.data)}`;
+    console.log(mensaje);
+    res.status(200).json({mensaje})
+  } catch (error) {
+    const errorMsg = error.response
+      ? error.response.data
+      : error.message;
+
+    const mensaje = `Mensaje en Recepcion Prueba: ${JSON.stringify(errorMsg)}`;
+    console.error(mensaje);
+
+    // Responder siempre con 200 aunque haya un error
+    res.status(200).json({ mensaje });
+  }
+}
+
+const autorizacionSRI = async(req,res)=>{
+  const username = '11182847';
+  const password = '60-dayfreetrial';
+
+  const auth = {
+    username: username,
+    password: password
+  };
+
+  const {claveAcceso} = req.body
+  if (!claveAcceso) return res.status(400).json({ msg: "Lo sentimos, debes enviar la clave de Acceso" });
+    
+  const endpointAutorizacion = `http://paules-001-site1.etempurl.com/api/facturacion/AutorizacionPrueba?ClaveAcceso=${claveAcceso}&RucEmpresa=${rucEmpresa}`;
+
+    const responseAutorizacion = await axios.get(endpointAutorizacion, {
+      auth: auth,
+      headers: {
+        'accept': 'text/plain' 
+      }
+    })
+
+    const mensaje = `Respuesta del servidor (AutorizacionPrueba): ${JSON.stringify(responseAutorizacion.data)}`;
+    console.log(mensaje);
+    res.status(200).json({mensaje})
+}
+
 export {
-  generateInvoiceXml
+  generateInvoiceXml,
+  recepcionSRI,
+  autorizacionSRI
 };

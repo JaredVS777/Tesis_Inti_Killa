@@ -66,16 +66,21 @@ const validacionEmail =[
 ]
 
 const validacionNuevoPassword =[
-    check(["token", "password", "confirmpassword"])
+    check(["password", "confirmpassword"])
         .exists()
-            .withMessage('Los campos "token" "password" y/o "confirmpassword" son obligatorios')
+            .withMessage('Los campos "password" y/o "confirmpassword" son obligatorios')
         .notEmpty()
-            .withMessage('Los campos "token" "password" y/o "confirmpassword" no pueden estar vacíos')
+            .withMessage('Los campos "password" y/o "confirmpassword" no pueden estar vacíos')
         .isLength({ min: 5 })
             .withMessage('El campo "password" debe tener al menos 5 caracteres')
         .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*).*$/)
             .withMessage('El campo "password" debe contener al menos una letra mayúscula, una letra minúscula, un número y un carácter especial')
         .customSanitizer(value => value?.trim()),
+
+    check("token")
+        .exists().withMessage('El campo "token" es obligatorio')
+        .notEmpty().withMessage('El campo "token" no puede estar vacío')
+        .isString().withMessage('El campo "token" debe ser una cadena de texto'),
 
     (req,res,next)=>{
         const errors = validationResult(req);

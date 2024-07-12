@@ -1,4 +1,6 @@
 import Cliente from "../models/Cliente.js"
+import Factura from "../models/Factura.js"
+import Proforma from "../models/Proforma.js"
 import mongoose from "mongoose"
 
 const perfilCliente =(req,res)=>{
@@ -33,13 +35,16 @@ const busquedaCliente = async (req, res) => {
     }
 };
 const registrarCliente = async(req,res)=>{
-    const {cedula} = req.body
+    const {cedula, email} = req.body
     if (Object.values(req.body).includes("")) return res.status(400).json({msg:"Lo sentimos, debes llenar todos los campos"})
     const verificarCedulaBDD = await Cliente.findOne({cedula})
     if(verificarCedulaBDD) return res.status(400).json({msg:"Lo sentimos, la cédula ya se encuentra registrada"})
+    const verificarCorreoBDD = await Cliente.findOne({email})
+    if(verificarCorreoBDD) return res.status(400).json({msg:"Lo sentimos, el correo ya se encuentra registrado"})
     const nuevoCliente = new Cliente(req.body)
     await nuevoCliente.save()
-    res.status(200).json({msg: "Registro exitoso del Cliente", cliente: nuevoCliente})
+    const clienteBDD = await Cliente.findOne({ cedula }).select("-createdAt -updatedAt -__v");
+    res.status(200).json({msg: "Registro exitoso del Cliente", cliente: clienteBDD})
 }
 const actualizarCliente = async(req,res)=>{
     const {id} = req.params
@@ -51,6 +56,14 @@ const actualizarCliente = async(req,res)=>{
 const eliminarCliente = async (req,res)=>{
     const {id} = req.params
     if( !mongoose.Types.ObjectId.isValid(id) ) return res.status(404).json({msg:`Lo sentimos, no existe el Cliente ${id}`})
+    const facturas = await Factura.find({ id_cliente:id })
+    if (facturas.length > 0) {
+        return res.status(404).json({ msg: "No se puede eliminar el cliente porque está registrado en una factura" });
+    }
+    const proformas = await Proforma.find({ id_cliente:id })
+    if (proformas.length > 0) {
+        return res.status(404).json({ msg: "No se puede eliminar el cliente porque está registrado en una proforma" });
+    }
     await Cliente.findByIdAndDelete(id);
     res.status(200).json({msg:"Cliente eliminado exitosamente"})
 }
