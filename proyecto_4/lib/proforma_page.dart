@@ -153,7 +153,9 @@ class _ProformaPageState extends State<ProformaPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Center(child: Text('PROFORMAS', style: TextStyle(color: Colors.white))), // Título centrado y color blanco
+        title: Center(
+          child: Text('PROFORMAS', style: TextStyle(color: Colors.white)),
+        ), // Título centrado y color blanco
         backgroundColor: Color(0xff5511b0), // Color de fondo del AppBar
         iconTheme: IconThemeData(color: Colors.white), // Color de las tres líneas del drawer
       ),

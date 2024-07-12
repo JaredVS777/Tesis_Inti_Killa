@@ -231,9 +231,14 @@ class _FormularioClientePageState extends State<FormularioClientePage> {
         }
       } catch (e) {
         print('Error al guardar el cliente: $e');
-        String errorMessage = e.toString().contains('La cédula ya se encuentra registrada')
-            ? 'La cédula ya se encuentra registrada'
-            : 'Error al guardar el cliente';
+        String errorMessage = '';
+        if (e.toString().contains('La cédula ya se encuentra registrada')) {
+          errorMessage = 'La cédula ya se encuentra registrada';
+        } else if (e.toString().contains('El correo ya se encuentra registrado')) {
+          errorMessage = 'El correo ya se encuentra registrado';
+        } else {
+          errorMessage = 'Error al guardar el cliente';
+        }
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(errorMessage)),
         );

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'api_service.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
+import 'package:flutter/services.dart';
 
 class FormularioProformaPage extends StatefulWidget {
   final Map<String, dynamic>? proforma;
@@ -35,6 +36,14 @@ class _FormularioProformaPageState extends State<FormularioProformaPage> {
     '5': {'nombre': 'Extintor 5lb', 'precio': 25.23},
     '20': {'nombre': 'Extintor 20lb', 'precio': 35.46},
     '30': {'nombre': 'Extintor 30lb', 'precio': 40.12},
+    '60': {'nombre': 'Extintor CO2 10lb', 'precio': 55.75},
+    '90': {'nombre': 'Alarma contra incendios', 'precio': 150},
+    '100': {'nombre': 'Gabinete para extintor', 'precio': 35},
+    '110': {'nombre': 'Señal salida emergencia', 'precio': 15},
+    '70': {'nombre': 'Manguera contra incendios 30m', 'precio': 70.5},
+    '130': {'nombre': 'Luces de emergencia', 'precio': 45},
+    '120': {'nombre': 'Botiquin primeros auxilios', 'precio': 25},
+    '140': {'nombre': 'Cámara de seguridad', 'precio': 120},
   };
 
   @override
@@ -331,8 +340,14 @@ class _FormularioProformaPageState extends State<FormularioProformaPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Formulario de Proformas'),
+        title: Center(
+          child: Text(
+            'Formulario de Proformas',
+            style: TextStyle(color: Colors.white),
+          ),
+        ),
         backgroundColor: Color(0xff5511b0),
+        iconTheme: IconThemeData(color: Colors.white), // Cambia el color de la flecha de retroceso a blanco
       ),
       backgroundColor: Color(0xFF0A192F),
       body: SingleChildScrollView(
@@ -447,6 +462,11 @@ class _FormularioProformaPageState extends State<FormularioProformaPage> {
                   type: TextInputType.number,
                   texto: 'Cantidad',
                   controller: _cantidadController,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(3),
+                    FilteringTextInputFormatter.allow(RegExp(r'^[1-9]\d{0,2}$')),
+                  ],
                 ),
                 _TextFieldCustom(
                   icono: Icons.monetization_on,
@@ -510,6 +530,7 @@ class _TextFieldCustom extends StatelessWidget {
   final String texto;
   final TextEditingController controller;
   final bool readOnly;
+  final List<TextInputFormatter>? inputFormatters;
 
   const _TextFieldCustom({
     Key? key,
@@ -518,6 +539,7 @@ class _TextFieldCustom extends StatelessWidget {
     required this.texto,
     required this.controller,
     this.readOnly = false,
+    this.inputFormatters,
   }) : super(key: key);
 
   @override
@@ -528,6 +550,7 @@ class _TextFieldCustom extends StatelessWidget {
         controller: controller,
         keyboardType: type,
         readOnly: readOnly,
+        inputFormatters: inputFormatters,
         decoration: InputDecoration(
           hintText: texto,
           filled: true,
