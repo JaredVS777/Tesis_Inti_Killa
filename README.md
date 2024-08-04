@@ -59,31 +59,39 @@ flutter run
 ## Aplicación móvil
 
 ### Google Play Store
-![GOOGLE PLAY STORE](https://github.com/user-attachments/assets/97fb53a5-160f-4632-9b3b-b9428f0ff81b)
+![Google Play Store](https://github.com/user-attachments/assets/81118367-c89f-48d8-baae-d715446f12e0)
 
 ### Splash Screen
-![Splash Screen](https://github.com/user-attachments/assets/320259bd-6ccd-4f2e-9c90-d89cd710ffee)
+![Splash Screen](https://github.com/user-attachments/assets/e6d984a6-e4a8-413d-95b4-a08aad21af78)
 
 ### Login
-![Login](https://github.com/user-attachments/assets/92cbf63d-5c6d-445b-9985-80acd791fe41)
+![Login](https://github.com/user-attachments/assets/13d0796f-4e70-4cd6-8608-152220339c4a)
 
 ### Recuperar contraseña
-![Recuperar contraseña](https://github.com/user-attachments/assets/4bade255-1980-41a1-a3c5-262b33e05c65)
+![Recuperar contraseña](https://github.com/user-attachments/assets/44bc3c2e-7a68-4eb8-aaf8-bead38a53610)
 
 ### Home
-![Home](https://github.com/user-attachments/assets/a7c026d7-b96f-4c8d-b9aa-ad5ad78e2d8a)
+![Home](https://github.com/user-attachments/assets/d840c1ae-0a93-443b-8d21-357df6c317a0)
 
 ### Clientes
-![Clientes](https://github.com/user-attachments/assets/1858734b-fa9f-4a04-8475-437e7de9771d)
+![Clientes](https://github.com/user-attachments/assets/d47ed4e4-1359-471a-a55f-59c2cedf3f78)
 
 ### Formulario Clientes
-![Proformas](https://github.com/user-attachments/assets/2c571fa3-df39-4ffc-8f96-69e1b46e9dbb)
+![Formulario Clientes](https://github.com/user-attachments/assets/f3d379bb-a2a2-41fd-8fd4-15fe7e568af3)
+
+### Proformas
+![Proformas](https://github.com/user-attachments/assets/90cd2b5c-bb17-4e0d-bd3c-1c909d2c4e6b)
 
 ### Facturas
-![Facturas](https://github.com/user-attachments/assets/a60ca600-15fc-4f84-bce0-419010e5ae66)
+![Facturas](https://github.com/user-attachments/assets/d0bd6942-724d-47fd-85b8-beb9274b56d4)
 
-### Formulario facturas
-![Formulario facturas](https://github.com/user-attachments/assets/dc0c3728-4c60-4a6d-afec-1c00a48d1f26)
+### Formulario Facturas
+![Formulario Facturas](https://github.com/user-attachments/assets/cbe9abba-e831-4143-88c1-ad8a37fd048b)
+
+### Menú desplegable
+![Menú desplegable](https://github.com/user-attachments/assets/079e6fba-96eb-42b3-afcf-487b5e14179b)
+
+
 
 
 
