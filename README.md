@@ -6,7 +6,7 @@ Este proyecto es una aplicación móvil destinada a los empleados de la empresa 
 ## Desarrollo de una aplicación móvil
 
 ## Documentacion de la tesis:
-https://drive.google.com/drive/folders/12b6DYKAopA2TTSEp9d0yvjNpyH6otMKE?usp=drive_link
+https://drive.google.com/file/d/1b-OPbNwFplZ2YGxwzqALF3mTCwHOZhEs/view?usp=sharing
 
 ## Formulario F_AA_233:
 https://drive.google.com/file/d/1NMnZzbPUZ3LYx88HKtGmJdeKKloTCClX/view?usp=sharing
