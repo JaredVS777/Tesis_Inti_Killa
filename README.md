@@ -18,20 +18,33 @@ https://youtu.be/SV973PRJKsI?si=j-FqMAm19rqxD2gp
 
 ## Manual de instalación
 Para la instalación de Flutter en un ordenador se sigue las instrucciones de la documentacion oficial:
+<br>
+
 https://docs.flutter.dev/get-started/install/windows
 
 Ambiente de desarrollo para la aplicacion móvil en Flutter:
--Visual Studio Code
--Android Studio
+* Visual Studio Code
+* Android Studio
 
 Clonar el repositorio:
-Para clonar el repositorio utilizamos el siguiente comando
-git clone (link del repositorio)
+<br>
+
+Para clonar el repositorio utilizamos el siguiente comando:
+<br>
+
+git clone https://github.com/JaredVS777/Tesis_Inti_Killa.git
 
 Instalación de las dependencias:
-Para instalar las dependencias necesarias para el proyecto se realiza el siguiente comando 
-git pub get
+<br>
 
+Para instalar las dependencias necesarias para el proyecto se realiza el siguiente comando:
+<br>
+
+flutter pub get
+
+Para la ejecución de la aplicación móvil se puede realizar mediante un emulador de Andorid Studio o a su vez mediante un dispositivo físico conectando a USB al orndenador y colocandolo en modo desarrollador y en el terminal de la aplicación ejecutamos el siguiente comando:
+<br>
+flutter run
 
 
 ## Aplicación móvil
