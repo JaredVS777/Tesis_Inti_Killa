@@ -61,22 +61,22 @@ flutter run
 ### Google Play Store
 ![GOOGLE PLAY STORE](https://github.com/user-attachments/assets/97fb53a5-160f-4632-9b3b-b9428f0ff81b)
 
+### Splash Screen
+![Splash Screen](https://github.com/user-attachments/assets/320259bd-6ccd-4f2e-9c90-d89cd710ffee)
+
 ### Login
-![LOGIN](https://github.com/user-attachments/assets/320259bd-6ccd-4f2e-9c90-d89cd710ffee)
+![Login](https://github.com/user-attachments/assets/92cbf63d-5c6d-445b-9985-80acd791fe41)
 
 ### Recuperar contraseña
-![Recuperar contraseña](https://github.com/user-attachments/assets/92cbf63d-5c6d-445b-9985-80acd791fe41)
+![Recuperar contraseña](https://github.com/user-attachments/assets/4bade255-1980-41a1-a3c5-262b33e05c65)
 
 ### Home
-![Home](https://github.com/user-attachments/assets/4bade255-1980-41a1-a3c5-262b33e05c65)
+![Home](https://github.com/user-attachments/assets/a7c026d7-b96f-4c8d-b9aa-ad5ad78e2d8a)
 
 ### Clientes
-![Clientes](https://github.com/user-attachments/assets/a7c026d7-b96f-4c8d-b9aa-ad5ad78e2d8a)
+![Clientes](https://github.com/user-attachments/assets/1858734b-fa9f-4a04-8475-437e7de9771d)
 
-### Formulario clientes
-![Formulario clientes](https://github.com/user-attachments/assets/1858734b-fa9f-4a04-8475-437e7de9771d)
-
-### Proformas
+### Formulario Clientes
 ![Proformas](https://github.com/user-attachments/assets/2c571fa3-df39-4ffc-8f96-69e1b46e9dbb)
 
 ### Facturas
