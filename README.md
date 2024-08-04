@@ -56,5 +56,13 @@ flutter run
 ```
 
 ## Aplicación móvil
-![WhatsApp Image 2024-07-10 at 07 25 11_64466a1d](https://github.com/user-attachments/assets/b846b026-2623-48a0-8fb9-5bc8d96b9e26)
+![WhatsApp Image 2024-07-15 at 16 34 44_a60bf8cc](https://github.com/user-attachments/assets/97fb53a5-160f-4632-9b3b-b9428f0ff81b)
+![WhatsApp Image 2024-07-10 at 07 25 11_122fe494](https://github.com/user-attachments/assets/320259bd-6ccd-4f2e-9c90-d89cd710ffee)
+![WhatsApp Image 2024-07-09 at 09 38 18_18fc8b84](https://github.com/user-attachments/assets/4bade255-1980-41a1-a3c5-262b33e05c65)
+![WhatsApp Image 2024-07-08 at 03 00 55_051a0e0b](https://github.com/user-attachments/assets/93b1850f-2170-4246-935d-dc70df7b49cf)
+![WhatsApp Image 2024-07-09 at 09 38 39_e9bc1f50](https://github.com/user-attachments/assets/a65f16ef-ede8-4380-95cd-19a2a9f651fa)
+
+
+
+
 
