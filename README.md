@@ -17,35 +17,43 @@ https://play.google.com/store/apps/details?id=com.intikilla.proyecto
 https://youtu.be/SV973PRJKsI?si=j-FqMAm19rqxD2gp
 
 ## Manual de instalación
-Para la instalación de Flutter en un ordenador se sigue las instrucciones de la documentacion oficial:
+1) Para la instalación de Flutter en un ordenador se sigue las instrucciones de la documentacion oficial:
 <br>
 
 https://docs.flutter.dev/get-started/install/windows
 
-Ambiente de desarrollo para la aplicacion móvil en Flutter:
+2) Ambiente de desarrollo para la aplicacion móvil en Flutter:
 * Visual Studio Code
 * Android Studio
 
-Clonar el repositorio:
+3) Clonar el repositorio:
 <br>
 
 Para clonar el repositorio utilizamos el siguiente comando:
 <br>
 
+```
 git clone https://github.com/JaredVS777/Tesis_Inti_Killa.git
+```
 
-Instalación de las dependencias:
+4) Instalación de las dependencias:
 <br>
 
 Para instalar las dependencias necesarias para el proyecto se realiza el siguiente comando:
 <br>
 
+```
 flutter pub get
+```
+5) Ejecución del proyecto:
+<br>
 
 Para la ejecución de la aplicación móvil se puede realizar mediante un emulador de Andorid Studio o a su vez mediante un dispositivo físico conectando a USB al orndenador y colocandolo en modo desarrollador y en el terminal de la aplicación ejecutamos el siguiente comando:
 <br>
-flutter run
 
+```
+flutter run
+```
 
 ## Aplicación móvil
 ![WhatsApp Image 2024-07-10 at 07 25 11_64466a1d](https://github.com/user-attachments/assets/b846b026-2623-48a0-8fb9-5bc8d96b9e26)
